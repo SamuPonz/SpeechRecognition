@@ -195,10 +195,10 @@ def getParameters(dictio):
     rows_size = []
     columns_size = []
     for i in dictio.values():
-        R = i.shape[0]  # number of time windows in the spectrogram
+        R = i.shape[0]  # number of rows (e.g. number of time windows in the spectrogram)
         rows_size.append(R)
         if len(i.shape) > 1:
-            C = i.shape[1]  # number of spectrums (computed from the windows) in the spectrogram
+            C = i.shape[1]  # number of columns (e.g. number of spectrums  in the spectrogram computed from the windows)
             columns_size.append(C)
     rows_size = np.array(rows_size, dtype=np.int)
     if len(i.shape) > 1:

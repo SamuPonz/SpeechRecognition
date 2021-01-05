@@ -1,5 +1,5 @@
-from _library_Mfccs import mfcc, delta
 import rtdMethods as rtd
+import mfccMethods as mfcc
 import numpy as np
 import fileManagment as fm
 import pandas as pd
@@ -12,7 +12,7 @@ from util import measure
 def loadFeatures(dataset, sample_rate, features_directory, dataset_name, method=2):
     features_name = ""
     if method == 1:
-        features_name = 'mfccs_features_' + dataset_name
+        features_name = 'mfcc_features_' + dataset_name
     elif method == 2:
         features_name = 'rdt_features_' + dataset_name
 
@@ -23,27 +23,28 @@ def loadFeatures(dataset, sample_rate, features_directory, dataset_name, method=
         return fm.readFile(features_file)
     else:
         print("No saved features found. New feature extraction...")
-        features, dataset_noise_level = buildFeatures(dataset, sample_rate, method)
-        fm.createFile(features_name, [features, dataset_noise_level])
-        return features, dataset_noise_level
+        features = buildFeatures(dataset, sample_rate, method)
+        fm.createFile(features_name, features)
+        return features
 
 
 def buildFeatures(dataset, sample_rate, method):
     if method == 1:
-        dataset_noise_level = 0
         features = mfccMethod(dataset, sample_rate)
-        return features, dataset_noise_level
+        return features
 
     elif method == 2:
-        features, dataset_noise_level = rtdMethod(dataset)
-        return features, dataset_noise_level
+        features = rtdMethod(dataset)
+        return features
 
+
+# After creating the pre-processing methods, normalization, silence threshold and segmentation will be done before
+# the featureExtraction, remember to modify this function
 
 def rtdMethod(dataset):
     K = 4
     M = 7
     scaled = 0  # if this flag is = 0 classic RTD is computed, if it is = 1 scaled RTD is computed
-    C = 0.5  # used to set the silence threshold
 
     # M and K are two predetermined parameters that have to be optimized manually looking at the performance of the
     # entire classification process.
@@ -108,57 +109,17 @@ def rtdMethod(dataset):
     W = 2 ** (K + 3)  # window size, delay in the RTD
     # K = log2(W)-3
 
-    # The Dataset is normalized: all the signals are rescaled in the range [-1,1] in order to apply the RTD.
-    # Indeed this is one of the assumptions about the signal on which it applied the RTD.
-    normalized_dataset = {k: rtd.newNormalization(v) for k, v in dataset.items()}
-
-    # It is useful do to apply a filter that can be seen as an "economic" segmentation: in order to reduce the samples
-    # of the signals all the samples whose absolute value is below a particular threshold are discarded. It is crucial
-    # to select the threshold properly. Since in the references was not specified the method usd to set the threshold,
-    # what it is done here is a personal solution. In this method, it is simply computed the mean on the first n
-    # elements of every signal. The means are collected in a vector and the threshold is set to E[means] + C*std[means],
-    # where C is a particular coverage factor which value is set manually, depending on the dataset.
-    # C = 0.5
-
-    dataset_noise_level = rtd.silenceThreshold(normalized_dataset, C)
-
-    segmented_dataset = {k: rtd.segmentation(v, dataset_noise_level) for k, v in normalized_dataset.items()}
-    # The following line is used to ignore the segmentation stage
-    # segmented_dataset = normalized_dataset
-
-    # Different trials were made in order to understand what was the best order in which performing these two steps:
-    # 1) segmentation -> normalization: due to the high dynamic range between the absolute maximum amplitudes of the
-    # signals in the dataset, and due also to the questionable method used to compute the silence threshold (which looks
-    # at the first n samples of every signal, where it is not ensured that there is silence), with a relatively high
-    # threshold's value some signals may be completely deleted. This causes some errors in the subsequent sections of
-    # the program. If normalization is performed before, all signals have the same max and min values! The amplitude
-    # information is completely lost?
-
-    # 2) normalization -> segmentation: In this way the problem stated above is partially solved, but other problems
-    # arise: at first it was selected a standard technique for the normalization, where the signal is normalized in the
-    # interval [0,1], than scaled by 2 (hence in [0,2]) and finally shifted down by one unit (hence [-1,1]). With this
-    # method, the baseline of the signal was different in every single signal, this effect occurs if the range of the
-    # original signal is not symmetrical.
-
-    # In order to solve both problems, it was chosen the following order: normalization -> segmentation, with an
-    # alternative method for the normalization. With this new method, the baseline remains at zero even after the the
-    # rescaling, but the signal amplitudes are significantly changed. Have to verify if this corrupts the
-    # data.
-    # (I think that this is not a problem as long as this do not compromise the recognition phase: it is a
-    # classification problem, not a compression one, i.e. it is not needed to reconstruct the original signal. Indeed
-    # the RTD itself cannot be reversed, there is no such thing as an inverse RTD transform.
-
     # The RTD_new algorithm is performed in order to build the spectrograms of the signals, seems to work properly:
     # W is the window size
-    dataset_spectrograms = {k: rtd.rtdNew(v, W, scaled) for k, v in segmented_dataset.items()}
+    dataset_spectrograms = {k: rtd.rtdNew(v, W, scaled) for k, v in dataset.items()}
 
     # This function builds the the fixed sized feature vector starting from the spectrograms, which can be different in
     # size (different number of columns, this represents the time dimension of the spectrograms that depends on the
     # number of samples of the signals. In order to have a fixed number of columns a number is selected (M) and the
     # averages of groups of columns is performed in order to obtain M columns in every spectrogram.
-    #
+
     # Problems:
-    # 1) Some segmented signals have very few columns, if M is greater than the number of column of a spectrgram
+    # 1) Some segmented signals have very few columns, if M is greater than the number of column of a spectrogram
     # meaningless values are  introduced in the feature vector. If the number of columns is really high, the averaging
     # causes a drastic compression of the information.
     # 2) A poor segmentation that leaves in the signals the "silence intervals" causes the spectrum to have meaningful
@@ -170,13 +131,15 @@ def rtdMethod(dataset):
     # low, leaving intact the high values spectrums, This is not so convincing because it causes a "distortion" of the
     # time axis, more that the actual averaging method. Actually, thinking about it, the time distortion it is already
     # introduced by the segmentation stage itself...
+
     dataset_features = {key: rtd.buildFeatureVector(v, M, key) for key, v in dataset_spectrograms.items()}
 
-    return dataset_features, dataset_noise_level
+    return dataset_features
 
 
+# This class is ok, it does only feature extraction
 def mfccMethod(dataset, sample_rate):
-    features = {k: mfccProcessing(v, sample_rate) for k, v in dataset.items()}
+    features = {k: mfcc.mfccProcessing(v, sample_rate) for k, v in dataset.items()}
     return features
 
 
@@ -201,14 +164,3 @@ def loadSubsets(features, features_directory):
         fm.createFile(test_name, test_dataset)
     return fm.readFile(train_file), fm.readFile(test_file)
 
-
-# The following method should be placed in another file
-# It is placed here in order to not modify the library file "_library_Mfccs.py"
-def mfccProcessing(signal, sample_rate):
-    mfcc_feat = mfcc(signal=signal, samplerate=sample_rate, winlen=0.025, winstep=0.01, numcep=13,
-                     nfilt=26, nfft=512, lowfreq=300, highfreq=None, preemph=0.95, ceplifter=0,
-                     appendEnergy=True, winfunc=np.hamming)
-    d_mfcc_feat = delta(mfcc_feat, 2)
-    dd_mfcc_feat = delta(d_mfcc_feat, 2)
-    feature_vector = np.concatenate((mfcc_feat, d_mfcc_feat, dd_mfcc_feat), axis=1)
-    return feature_vector

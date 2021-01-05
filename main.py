@@ -9,6 +9,9 @@ import time
 # read and import audio files
 import datasetMenagment as ds
 
+# pre-processing
+import signalPreprocessing as sp
+
 # feature extraction
 import featureExtraction as fe
 
@@ -28,12 +31,14 @@ dataset_name = 'myData.p'
 
 # Load data:
 print("Loading the dataset...")
-dataset = ds.loadDataset(dataset_directory, audiofiles_directory, dataset_name=dataset_name)
+raw_dataset = ds.loadDataset(dataset_directory, audiofiles_directory, dataset_name=dataset_name)
 print("Dataset loaded!")
 
-mfcc_features, mfcc_dataset_noise_level = fe.loadFeatures(dataset, sample_rate, features_directory, dataset_name, method=1)
+processed_dataset = sp.preProcessing(raw_dataset, sample_rate)
+
+mfcc_features = fe.loadFeatures(processed_dataset, sample_rate, features_directory, dataset_name, method=1)
 # mod 1 builds the feature vectors computing the MFCC of every signal (variable size -> has to be fixed)
-rtd_features, rtd_dataset_noise_level = fe.loadFeatures(dataset, sample_rate, features_directory, dataset_name, method=2)
+rtd_features = fe.loadFeatures(processed_dataset, sample_rate, features_directory, dataset_name, method=2)
 # mod 2 builds the feature vectors computing the RTD of every signal (fixed size)
 
 # print("Loading the train/test sets...")
@@ -44,17 +49,23 @@ rtd_features, rtd_dataset_noise_level = fe.loadFeatures(dataset, sample_rate, fe
 ####################################################################################
 
 # Data Visualization:
+util.plotClass(6, raw_dataset)
+util.plotClass(6, processed_dataset)
 # util.plotClass(6, mfcc_features)
-util.plotClass(6, rtd_features)
+# util.plotClass(6, rtd_features)
 
-# print("dataset:")
-# util.getParameters(dataset)
+
+print("raw dataset:")
+util.getParameters(raw_dataset)
 #
-# print("mfcc_features:")
-# util.getParameters(mfcc_features)
+print("processed dataset:")
+util.getParameters(processed_dataset)
 #
-# print("rtd_features:")
-# util.getParameters(rtd_features)
+print("mfcc_features:")
+util.getParameters(mfcc_features)
+#
+print("rtd_features:")
+util.getParameters(rtd_features)
 #
 # util.viewExample("off0.wav", dataset, mfcc_features, rtd_features)
 
