@@ -10,21 +10,22 @@ import fileManagment as fm
 import numpy as np
 
 
-def loadDataset(dataset_directory, audiofiles_directory, dataset_name):
+def load_dataset(dataset_directory, audiofiles_directory, dataset_name):
     # Loads the dataset or creates a new one using the audio files stored in the specified directory
 
     dataset_file = dataset_directory / dataset_name
-    if not dataset_file.is_file():  # if file does not exist
+
+    if not (dataset_file.is_file()):  # if file does not exist
         print("No saved dataset found. Building a new dataset named: ", dataset_name)
-        dataset = readAudioFiles(audiofiles_directory)
-        fm.createFile(dataset_name, dataset)  # saves the dictionary in a file
+        dataset = read_audio_files(audiofiles_directory)
+        fm.create_file(dataset_name, dataset)  # saves the dictionary in a file
     # return literal_eval(fm.readFile(dataset_name))  # Safely evaluate an expression node or a string containing a
     # Python literal or container display. The string or node provided may only consist of the following Python literal
     # structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, None, bytes and sets.
-    return fm.readFile(dataset_name)  # this is now a string, not a dictionary, nevertheless dict methods work fine
+    return fm.read_file(dataset_name)  # this is now a string, not a dictionary, nevertheless dict methods work fine
 
 
-def readAudioFiles(directory):
+def read_audio_files(directory):
     # Reads the audio file in the specified directory
     # Returns a dictionary {filename : audio signal}
 
@@ -39,6 +40,33 @@ def readAudioFiles(directory):
             sample_rate, audio = wavfile.read(subDirectory / filename)
             audio_signals[filename] = audio  # add the file in the dictionary
     return audio_signals  # returns the dictionary
+
+
+def load_noise(noise_directory, audiofiles_directory, noise_name):
+    # Loads the dataset or creates a new one using the audio files stored in the specified directory
+
+    noise_file = noise_directory / noise_name
+
+    if not (noise_file.is_file()):  # if file does not exist
+        print("No saved noise signals found. Building a new file named: ", noise_name)
+        noise = read_noise_files(audiofiles_directory)
+        fm.create_file(noise_name, noise)  # saves the dictionary in a file
+        # return literal_eval(fm.readFile(dataset_name))  # Safely evaluate an expression node or a string containing a
+        # Python literal or container display. The string or node provided may only consist of the following Python literal
+        # structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, None, bytes and sets.
+    return fm.read_file(noise_name)  # this is now a string, not a dictionary, nevertheless dict methods work fine
+
+
+def read_noise_files(directory):
+    # Reads the audio file in the specified directory
+    # Returns a dictionary {filename : audio signal}
+
+    noise_signals = dict()  # Dictionary of the audio signals {filename : audio signal}
+    for filename in os.listdir(directory):
+        # print(filename)  # debug
+        sample_rate, audio = wavfile.read(directory / filename)
+        noise_signals[filename] = audio  # add the file in the dictionary
+    return noise_signals  # returns the dictionary
 
 
 # Function used to rename files in a directory:

@@ -1,3 +1,6 @@
+from scipy.signal import butter, sosfilt, sosfiltfilt, sosfreqz
+from util import measure
+import _library_Sigproc as sigproc
 import numpy as np
 
 # This files contains all the methods regarding the pre-processing phase of the signals
@@ -8,7 +11,6 @@ import numpy as np
 # Then the silence removal is implemented, have to understand more about this...
 # Finally the end point is detected.
 
-
 # Need for a function that acts on all the dictonary and dor functions that act on single signals
 # Work on the single signal function needed for the test/recognition phase.
 # The function working on the entire dataset is needed in the training phase, here it is set the noise threshold
@@ -18,14 +20,99 @@ import numpy as np
 # Maybe a file with all the information of the dataset will be used, maybe JSON.
 
 # Normalized Dataset only needed for RTD and not MFCC??
-import scipy
 
 
-def preProcessing(dataset, sample_rate):
+def new_pre_processing(dataset, sample_rate):
+    filtered_dataset = {k: noise_reduction(v, sample_rate) for k, v in dataset.items()}
+    normalized_dataset = {k: new_normalization(v) for k, v in filtered_dataset.items()}
+    segmented_dataset = {k: silence_removal(v, sample_rate) for k, v in normalized_dataset.items()}
+    return segmented_dataset
+
+    # //////////////
+    # return filtered_dataset, normalized_dataset, segmented_dataset
+    # //////////////
+
+
+def new_normalization(x):
+    # Casting of the signal due to the fact that we are re-scaling it in a range [-1; 1], we cannot use integers.
+    x = x.astype(np.single)
+
+    # Normalization: Every value is divided by the max absolute value
+    x = x / np.abs(x).max()
+    return x
+
+
+def noise_reduction(signal, sample_rate):
+    lowcut = 300  # Hz
+    highcut = 4000  # Hz
+    order = 20
+    filtered_signal = butter_bandpass_filter(signal, lowcut, highcut, sample_rate, order)
+    return filtered_signal
+
+
+def silence_removal(signal, sample_rate, win_func=lambda x: np.ones((x,))):
+    # Define thresholds for energy and zero crossing rate
+    energy_th = 0.2  # if higher, more segmentation
+    zero_crossing_th = 80  # if lower, more segmentation
+    # Define window dimension in time for framing the signal, computing the number of samples
+    win_len = 0.01  # 25 ms
+    win_step = 0.01  # 25 ms # if equal to win_len, no overlap
+    # windows of 25 ms without overlapping generate frames of 400 samples, up to 40 frames in this dataset
+    frame_len = win_len * sample_rate
+    frame_step = win_step * sample_rate
+
+    # Signal framing
+    frames = sigproc.framesig(signal, frame_len, frame_step, win_func)
+
+    # Energies of the frames
+    energies = np.sum(np.square(frames), 1)  # this stores the total energy in each frame (each row)
+
+    # Zero crossing rates of the frames
+    zero_crosses = np.zeros(frames.shape[0])
+    for i in np.arange(0, frames.shape[0]):
+        zero_crosses[i] = (np.diff(np.sign(frames[i, :])) != 0).sum()
+
+    # Concatenate the parameters to the relative frames in order to easy delete frames
+    energy_T = np.transpose([energies])
+    zcr_T = np.transpose([zero_crosses])
+    frames = np.concatenate((energy_T, zcr_T, frames), axis=1)
+
+    # Delete frames which have low energy and high zero crossing rate
+    frames = frames[np.logical_and(frames[:, 0] > energy_th, frames[:, 1] < zero_crossing_th)]
+    # Conditional statements like data[:,0] < 25 create boolean arrays that track, element-by-element, where the
+    # condition in an array is true or false. Index numpy arrays with these boolean arrays. This kind of conditional
+    # indexing allows to extract the rows (or columns, or elements).
+    # Logical tools to combine boolean arrays element-by-element. Regular and, or, and not statements don't work because
+    # they try to combine the boolean arrays together as a whole. Numpy provides a set of these tools for use in the
+    # form of np.logical_and, np.logical_or, and np.logical_not. It is possible to combine boolean arrays element-wise
+    # to find rows that satisfy more complicated conditions.
+
+    # Delete parameters (energies and zero crossing rate)
+    frames = frames[:, 2:]
+    segmented_signal = sigproc.deframesig(frames, frames.size, frame_len, frame_step, win_func)
+    return segmented_signal
+
+
+def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
+    nyq = 0.5 * sample_rate  # 8000 Hz
+    low = lowcut / nyq  # 300/8000 = 0.0375
+    high = highcut / nyq  # 3400/8000 = 0.425
+
+    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+    y = sosfilt(sos, data)
+    # filtfilt removes phase delay but it is slower
+    # y = sosfiltfilt(sos, data)
+    return y
+
+
+# //////////////////////////////////////////////////////////////
+
+
+def old_pre_processing(dataset):
 
     # The Dataset is normalized: all the signals are rescaled in the range [-1,1] in order to apply the RTD.
     # Indeed this is one of the assumptions about the signal on which it applied the RTD.
-    normalized_dataset = {k: newNormalization(v) for k, v in dataset.items()}
+    normalized_dataset = {k: new_normalization(v) for k, v in dataset.items()}
 
     # It is useful do to apply a filter that can be seen as an "economic" segmentation: in order to reduce the samples
     # of the signals all the samples whose absolute value is below a particular threshold are discarded. It is crucial
@@ -33,8 +120,8 @@ def preProcessing(dataset, sample_rate):
     # what it is done here is a personal solution. In this method, it is simply computed the mean on the first n
     # elements of every signal. The means are collected in a vector and the threshold is set to E[means] + C*std[means],
     # where C is a particular coverage factor which value is set manually, depending on the dataset.
-    C = 0.5
-    dataset_noise_level = silenceThreshold(normalized_dataset, C)
+    C = 3
+    dataset_noise_level = silence_threshold(normalized_dataset, C)
 
     segmented_dataset = {k: segmentation(v, dataset_noise_level) for k, v in normalized_dataset.items()}
 
@@ -66,14 +153,7 @@ def preProcessing(dataset, sample_rate):
     return segmented_dataset
 
 
-def newNormalization(x):
-
-    # Casting of the signal due to the fact that we are re-scaling it in a range [-1; 1], we cannot use integers.
-    x = x.astype(np.single)
-
-    # Normalization: Every value is divided by the max absolute value
-    x = x / np.abs(x).max()
-
+def old_normalization(x):
     # The following method is not correct, it modifies the distributions of values in the signals
     # x = np.where(x >= 0, x / np.max(x), -x / np.min(x))
 
@@ -87,10 +167,6 @@ def newNormalization(x):
     #     else:
     #         break
 
-    return x
-
-
-def oldNormalization(x):
     # This method does not modify the signal distribution in [-1,1] but the baseline is different for every signal
 
     # normalization in [-1,1]: x_normalized = (x-min(x))/(max(x)-min(x))
@@ -110,7 +186,7 @@ def oldNormalization(x):
     return scaled_x
 
 
-def silenceThreshold(dataset, C):
+def silence_threshold(dataset, C):
     # --- Estimating the silence threshold taking the first 500 samples of each signal in the dataset ---
     # This may not be the best solution...
 
@@ -143,26 +219,17 @@ def segmentation(signal, noise):
 # //////////////////////////////////////////////////////////////
 
 
-def noiseReduction(signal, sample_rate):
-
-    # Try this implementation, advised for low cost hardware
-    # central_frequency = 1500  # Hz
-    # samples =
-    # Q = samples/(sample_rate/central_frequency)  # or defined some other way
-    # w_c = 2 * np.pi * central_frequency / sample_rate
-    # beta = np.cos(w_c)
-    # BW = w_c / Q
-    # alpha = (1. - np.sin(BW)) / np.cos(BW)
-    # G = (1. - alpha) / 2.
-    # filtered_signal = scipy.signal.lfilter([G, 0, -G], [1, -beta * (1 + alpha), alpha], signal)
-    # return filtered_signal
-    return
-
-
-def silenceRemoval():
-    return
-
-
-def endPointDetection():
-    return
-
+# def simple_band_pass(signal,  lowcut, highcut, sample_rate):
+#     # Second order band pass filter
+#
+#     bandwidth = highcut - lowcut
+#     central_frequency = bandwidth/2.
+#     w_c = 2 * np.pi * central_frequency
+#     bw = 2 * np.pi * bandwidth
+#
+#     # beta = np.cos(w_c)
+#     # alpha = (1. - np.sin(bw)) / np.cos(bw)
+#     # G = (1. - alpha) / 2.
+#     # filtered_signal = scipy.signal.lfilter([G, 0, -G], [1, -beta * (1 + alpha), alpha], signal)
+#     # return filtered_signal
+#     return

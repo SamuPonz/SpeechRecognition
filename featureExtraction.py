@@ -1,15 +1,13 @@
 import rtdMethods as rtd
 import mfccMethods as mfcc
-import numpy as np
 import fileManagment as fm
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
 from util import measure
 
 
 @measure
-def loadFeatures(dataset, sample_rate, features_directory, dataset_name, method=2):
+def load_features(dataset, sample_rate, features_directory, dataset_name, method=2):
     features_name = ""
     if method == 1:
         features_name = 'mfcc_features_' + dataset_name
@@ -20,30 +18,30 @@ def loadFeatures(dataset, sample_rate, features_directory, dataset_name, method=
 
     if features_file.is_file():
         print("Loading stored features...")
-        return fm.readFile(features_file)
+        return fm.read_file(features_file)
     else:
         print("No saved features found. New feature extraction...")
-        features = buildFeatures(dataset, sample_rate, method)
-        fm.createFile(features_name, features)
+        features = build_features(dataset, sample_rate, method)
+        fm.create_file(features_name, features)
         return features
 
 
-def buildFeatures(dataset, sample_rate, method):
+def build_features(dataset, sample_rate, method):
     if method == 1:
-        features = mfccMethod(dataset, sample_rate)
+        features = mfcc_method(dataset, sample_rate)
         return features
 
     elif method == 2:
-        features = rtdMethod(dataset)
+        features = rtd_method(dataset)
         return features
 
 
 # After creating the pre-processing methods, normalization, silence threshold and segmentation will be done before
 # the featureExtraction, remember to modify this function
 
-def rtdMethod(dataset):
+def rtd_method(dataset):
     K = 4
-    M = 7
+    M = 8
     scaled = 0  # if this flag is = 0 classic RTD is computed, if it is = 1 scaled RTD is computed
 
     # M and K are two predetermined parameters that have to be optimized manually looking at the performance of the
@@ -63,7 +61,7 @@ def rtdMethod(dataset):
     # The feature vector will be only a column signal, we will have floor(log2(N))-3 clustering coefficients
     # representing the spectral content of the whole signal.
 
-    # M = 7 is the number of segments of the spectrogram, is the number of columns of the feature vector matrix.
+    # M is the number of segments of the spectrogram, is the number of columns of the feature vector matrix.
     # M is used to fix the number of columns (T) of the spectrograms, by averaging every Ts column, value that changes
     # for every signal spectrum because Ts = T//M. M <= T. the T value to use should be the lowest of the dataset of
     # spectrograms. Since T = N//M, the N value to use should be the lowest of the dataset of the audio signals.
@@ -111,7 +109,7 @@ def rtdMethod(dataset):
 
     # The RTD_new algorithm is performed in order to build the spectrograms of the signals, seems to work properly:
     # W is the window size
-    dataset_spectrograms = {k: rtd.rtdNew(v, W, scaled) for k, v in dataset.items()}
+    dataset_spectrograms = {k: rtd.rtd_new(v, W, scaled) for k, v in dataset.items()}
 
     # This function builds the the fixed sized feature vector starting from the spectrograms, which can be different in
     # size (different number of columns, this represents the time dimension of the spectrograms that depends on the
@@ -132,18 +130,21 @@ def rtdMethod(dataset):
     # time axis, more that the actual averaging method. Actually, thinking about it, the time distortion it is already
     # introduced by the segmentation stage itself...
 
-    dataset_features = {key: rtd.buildFeatureVector(v, M, key) for key, v in dataset_spectrograms.items()}
+    dataset_features = {key: rtd.build_feature_vector(v, M, key) for key, v in dataset_spectrograms.items()}
 
     return dataset_features
 
+    # //////////////
+    # return dataset_spectrograms, dataset_features
+    # //////////////
 
-# This class is ok, it does only feature extraction
-def mfccMethod(dataset, sample_rate):
-    features = {k: mfcc.mfccProcessing(v, sample_rate) for k, v in dataset.items()}
+
+def mfcc_method(dataset, sample_rate):
+    features = {k: mfcc.mfcc_processing(v, sample_rate) for k, v in dataset.items()}
     return features
 
 
-def dataSplit(features, train_size=0.7):
+def data_split(features, train_size=0.7):
     # Creating testing and training sets
 
     s = pd.Series(features)
@@ -151,7 +152,7 @@ def dataSplit(features, train_size=0.7):
     return training_dataset, test_dataset
 
 
-def loadSubsets(features, features_directory):
+def load_subsets(features, features_directory):
     # Loads saved train and test sets, creates them if there are none
     train_name = "train_features.p"
     test_name = "test_features.p"
@@ -159,8 +160,7 @@ def loadSubsets(features, features_directory):
     test_file = features_directory / test_name
     if not train_file.is_file() or not test_file.is_file():
         print("No saved train/test sets found. Building two new random sets...")
-        train_dataset, test_dataset = dataSplit(features, train_size=0.7)
-        fm.createFile(train_name, train_dataset)
-        fm.createFile(test_name, test_dataset)
-    return fm.readFile(train_file), fm.readFile(test_file)
-
+        train_dataset, test_dataset = data_split(features, train_size=0.7)
+        fm.create_file(train_name, train_dataset)
+        fm.create_file(test_name, test_dataset)
+    return fm.read_file(train_file), fm.read_file(test_file)

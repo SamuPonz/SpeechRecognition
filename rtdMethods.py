@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rtdNew(signal, window_size, scaled):
+def rtd_new(signal, window_size, scaled):
     # Computation of the Reaction Diffusion Transform.
     # This method returns an approximation of the spectrum of the input signal
     # Parameters:
@@ -50,7 +50,7 @@ def rtdNew(signal, window_size, scaled):
     return spectrogram
 
 
-def buildFeatureVector(spectrogram, M, key):
+def build_feature_vector(spectrogram, M, key):
     print(key)
     k = spectrogram.shape[0]  # number of channels of every spectrum in the spectrograms
     T = spectrogram.shape[1]  # number of spectrums (computed from the windows) in the spectrogram

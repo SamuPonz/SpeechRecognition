@@ -42,7 +42,7 @@ def handle_warning(message, category, filename, lineno, file=None, line=None):
         raise category(message)
 
 
-def viewExample(name, dataset, mfcc_features, rtd_features):
+def view_example(name, dataset, mfcc_features, rtd_features):
     # Look at a particular signal, selected by its name, adn its feature vectors
 
     signal = dataset.get(name)
@@ -93,7 +93,7 @@ def viewExample(name, dataset, mfcc_features, rtd_features):
 #     plt.imshow(feature_vector)
 
 
-def viewRandomRtdExample(j, dataset, normalized_dataset, segmented_dataset, dataset_spectrograms, dataset_features):
+def view_random_rtd_example(j, dataset, normalized_dataset, segmented_dataset, dataset_spectrograms, dataset_features):
     # --- Observe an example of the rtd approach ---
 
     example0 = list(dataset.values())[j]
@@ -143,7 +143,7 @@ def viewRandomRtdExample(j, dataset, normalized_dataset, segmented_dataset, data
     axs[4].set_ylabel('K cluster\ncoefficients', fontsize=y_size)
 
 
-def viewRandomMfccExample(j, dataset, dataset_features):
+def view_random_mfcc_example(j, dataset, dataset_features):
     # --- Observe an example of the rtd approach ---
 
     example0 = list(dataset.values())[j]
@@ -187,7 +187,7 @@ def viewRandomMfccExample(j, dataset, dataset_features):
 #     print("The number of elements of the vectors ranges in: [", sizes.min(), ";", sizes.max(), "]")
 
 
-def getParameters(dictio):
+def get_parameters(dictio):
     # Evaluation of the shapes of the data
     # E.g. checking what is the minimum size of the number of columns of the rtd spectrograms and select M in a smart
     # way to be sure that it is not greater than any column's size.
@@ -208,7 +208,7 @@ def getParameters(dictio):
         print("The number of columns ranges in: [", columns_size.min(), ";", columns_size.max(), "]")
 
 
-def plotDataset(dictio):
+def plot_dataset(dictio):
     # --- Plotting the entire dataset ---
     for i in range(10):
         i = 100*i
@@ -226,7 +226,18 @@ def plotDataset(dictio):
             counter += 1
 
 
-def plotClass(command_class, dictio):
+def plot_noise(dictio):
+    # --- Plotting the entire dataset ---
+    plt.figure(figsize=(15, 4))
+    counter = 1
+    for value in list(dictio.values()):
+        plt.subplot(10, 10, counter)
+        plt.plot(value.transpose())
+        plt.grid(True)
+        counter += 1
+
+
+def plot_class(command_class, dictio):
     # --- Plot an entire class of the dataset ---
     # command_class = 8  # select i from 0 to 9
     if command_class != 0:
@@ -250,7 +261,7 @@ def plotClass(command_class, dictio):
         plt.grid(True)
 
 
-def castingInfluence(dictio):
+def casting_influence(dictio):
     # --- Observe how casting influences the reproduction of audio file
 
     # The wavfile.read function used to create the dataset returns a nparray which type is the one which minimal

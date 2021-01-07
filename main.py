@@ -20,26 +20,45 @@ import featureExtraction as fe
 ####################################################################################
 import util
 
-audiofiles_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\(1000,10)_ComandiDatasetSelezionati")
+command_recordings_dir = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\(1000,10)_ComandiDatasetSelezionati")
+noise_recordings_dir = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\_background_noise")
 dataset_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
+noise_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
 features_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
 
 # Fixed sample rate of the audio signals analyzed
 sample_rate = 16000  # Hz Sampling frequency of this particular dataset
 
-dataset_name = 'myData.p'
+dataset_name = "myData.p"
+noise_name = "myNoise.p"
 
 # Load data:
 print("Loading the dataset...")
-raw_dataset = ds.loadDataset(dataset_directory, audiofiles_directory, dataset_name=dataset_name)
+raw_dataset = ds.load_dataset(dataset_directory, command_recordings_dir, dataset_name=dataset_name)
 print("Dataset loaded!")
 
-processed_dataset = sp.preProcessing(raw_dataset, sample_rate)
+# print("Loading noise signals...")
+# noise_signals = ds.load_noise(noise_directory, noise_recordings_dir, noise_name=noise_name)
+# print("Noise signals loaded!")
 
-mfcc_features = fe.loadFeatures(processed_dataset, sample_rate, features_directory, dataset_name, method=1)
+print("Pre-processing data...")
+fine_dataset = sp.new_pre_processing(raw_dataset, sample_rate)
+print("Pre-processing done!")
+
+# //////////////
+# filtered_dataset, normalized_dataset, fine_dataset = sp.new_pre_processing(raw_dataset, sample_rate)
+# //////////////
+
+mfcc_features = fe.load_features(fine_dataset, sample_rate, features_directory, dataset_name, method=1)
 # mod 1 builds the feature vectors computing the MFCC of every signal (variable size -> has to be fixed)
-rtd_features = fe.loadFeatures(processed_dataset, sample_rate, features_directory, dataset_name, method=2)
+rtd_features = fe.load_features(fine_dataset, sample_rate, features_directory, dataset_name, method=2)
 # mod 2 builds the feature vectors computing the RTD of every signal (fixed size)
+
+# //////////////
+# dataset_spectrograms = rtd_features[0]
+# dataset_features = rtd_features[1]
+# //////////////
+
 
 # print("Loading the train/test sets...")
 # train_dataset, test_dataset = fe.loadSubsets(features, features_directory)
@@ -49,24 +68,34 @@ rtd_features = fe.loadFeatures(processed_dataset, sample_rate, features_director
 ####################################################################################
 
 # Data Visualization:
-util.plotClass(6, raw_dataset)
-util.plotClass(6, processed_dataset)
-# util.plotClass(6, mfcc_features)
-# util.plotClass(6, rtd_features)
+util.plot_class(4, raw_dataset)
+util.plot_class(4, fine_dataset)
+util.plot_class(4, mfcc_features)
+util.plot_class(4, rtd_features)
+
+
+# i = 7
+# util.plot_class(i, raw_dataset)
+# util.plot_class(i, filtered_dataset)
+# util.plot_class(i, normalized_dataset)
+# util.plot_class(i, fine_dataset)
+# util.plot_class(i, dataset_spectrograms)
+# util.plot_class(i, dataset_features)
 
 
 print("raw dataset:")
-util.getParameters(raw_dataset)
-#
-print("processed dataset:")
-util.getParameters(processed_dataset)
-#
+util.get_parameters(raw_dataset)
+
+print("fine dataset:")
+util.get_parameters(fine_dataset)
+
 print("mfcc_features:")
-util.getParameters(mfcc_features)
-#
+util.get_parameters(mfcc_features)
+
 print("rtd_features:")
-util.getParameters(rtd_features)
-#
-# util.viewExample("off0.wav", dataset, mfcc_features, rtd_features)
+util.get_parameters(rtd_features)
+
+# util.view_example("yes23.wav", raw_dataset, mfcc_features, rtd_features)
+
 
 plt.show()

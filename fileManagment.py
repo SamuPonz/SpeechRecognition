@@ -1,7 +1,7 @@
 # Simple functions to create and to load files
 
 
-def readFile(file_name):
+def read_file(file_name):
     try:
         import cPickle as pickle
     except ImportError:  # Python 3.x
@@ -11,7 +11,7 @@ def readFile(file_name):
         return pickle.load(fp)
 
 
-def createFile(file_name, content):
+def create_file(file_name, content):
     try:
         import cPickle as pickle
     except ImportError:  # Python 3.x
