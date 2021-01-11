@@ -7,13 +7,8 @@ from util import measure
 
 
 @measure
-def load_features(dataset, sample_rate, features_directory, dataset_name, method=2):
-    features_name = ""
-    if method == 1:
-        features_name = 'mfcc_features_' + dataset_name
-    elif method == 2:
-        features_name = 'rdt_features_' + dataset_name
-
+def load_mfcc_features(dataset, sample_rate, features_directory, dataset_name, fixed=False):
+    features_name = 'mfcc_features_' + dataset_name
     features_file = features_directory / features_name
 
     if features_file.is_file():
@@ -21,18 +16,23 @@ def load_features(dataset, sample_rate, features_directory, dataset_name, method
         return fm.read_file(features_file)
     else:
         print("No saved features found. New feature extraction...")
-        features = build_features(dataset, sample_rate, method)
+        features = mfcc_method(dataset, sample_rate, fixed)
         fm.create_file(features_name, features)
         return features
 
 
-def build_features(dataset, sample_rate, method):
-    if method == 1:
-        features = mfcc_method(dataset, sample_rate)
-        return features
+@measure
+def load_rtd_features(dataset, features_directory, dataset_name):
+    features_name = 'rdt_features_' + dataset_name
+    features_file = features_directory / features_name
 
-    elif method == 2:
+    if features_file.is_file():
+        print("Loading stored features...")
+        return fm.read_file(features_file)
+    else:
+        print("No saved features found. New feature extraction...")
         features = rtd_method(dataset)
+        fm.create_file(features_name, features)
         return features
 
 
@@ -139,8 +139,12 @@ def rtd_method(dataset):
     # //////////////
 
 
-def mfcc_method(dataset, sample_rate):
-    features = {k: mfcc.mfcc_processing(v, sample_rate) for k, v in dataset.items()}
+def mfcc_method(dataset, sample_rate, fixed):
+    win_len = 0.025  # ms
+    win_step = 0.01  # ms
+    fixed_number_of_frames, window_ratio = mfcc.optimal_parameters(dataset, sample_rate, win_len, win_step)
+    features = {k: mfcc.mfcc_processing(v, sample_rate, fixed_number_of_frames, window_ratio, fixed)
+                for k, v in dataset.items()}
     return features
 
 

@@ -22,15 +22,18 @@ import numpy as np
 # Normalized Dataset only needed for RTD and not MFCC??
 
 
-def new_pre_processing(dataset, sample_rate):
+def pre_processing(dataset, sample_rate):
     filtered_dataset = {k: noise_reduction(v, sample_rate) for k, v in dataset.items()}
     normalized_dataset = {k: new_normalization(v) for k, v in filtered_dataset.items()}
+    return normalized_dataset
+    # //////////////
+    # return filtered_dataset, normalized_dataset
+    # //////////////
+
+
+def segmentation(normalized_dataset, sample_rate):
     segmented_dataset = {k: silence_removal(v, sample_rate) for k, v in normalized_dataset.items()}
     return segmented_dataset
-
-    # //////////////
-    # return filtered_dataset, normalized_dataset, segmented_dataset
-    # //////////////
 
 
 def new_normalization(x):
@@ -209,7 +212,7 @@ def silence_threshold(dataset, C):
     return noise
 
 
-def segmentation(signal, noise):
+def old_segmentation(signal, noise):
     # The segmentation is performed deleting the silence time intervals in the audio signals. This reduces the length
     # of the time series, leaving only meaningful samples.
     # noise = the estimated silence level, set manually observing the dataset

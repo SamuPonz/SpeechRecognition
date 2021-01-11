@@ -132,7 +132,7 @@ def ssc(signal,samplerate=16000,winlen=0.025,winstep=0.01,
     return numpy.dot(pspec*R,fb.T) / feat
 
 def hz2mel(hz):
-    """Convert a value in Hertz to Mels
+    """Convert a value in Hertz to Mel
 
     :param hz: a value in Hz. This can also be a numpy array, conversion proceeds element-wise.
     :returns: a value in Mels. If an array was passed in, an identical sized array is returned.

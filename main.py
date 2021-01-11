@@ -10,7 +10,7 @@ import time
 import datasetMenagment as ds
 
 # pre-processing
-import signalPreprocessing as sp
+import preProcessing as sp
 
 # feature extraction
 import featureExtraction as fe
@@ -42,16 +42,18 @@ print("Dataset loaded!")
 # print("Noise signals loaded!")
 
 print("Pre-processing data...")
-fine_dataset = sp.new_pre_processing(raw_dataset, sample_rate)
+fine_dataset = sp.pre_processing(raw_dataset, sample_rate)
+segmented_dataset = sp.segmentation(fine_dataset, sample_rate)
 print("Pre-processing done!")
 
 # //////////////
 # filtered_dataset, normalized_dataset, fine_dataset = sp.new_pre_processing(raw_dataset, sample_rate)
 # //////////////
 
-mfcc_features = fe.load_features(fine_dataset, sample_rate, features_directory, dataset_name, method=1)
+mfcc_features = fe.load_mfcc_features(fine_dataset, sample_rate, features_directory, dataset_name, fixed=False)
+# mfcc_features = fe.load_mfcc_features(segmented_dataset, sample_rate, features_directory, dataset_name, fixed=False)
 # mod 1 builds the feature vectors computing the MFCC of every signal (variable size -> has to be fixed)
-rtd_features = fe.load_features(fine_dataset, sample_rate, features_directory, dataset_name, method=2)
+rtd_features = fe.load_rtd_features(segmented_dataset, features_directory, dataset_name)
 # mod 2 builds the feature vectors computing the RTD of every signal (fixed size)
 
 # //////////////
@@ -68,10 +70,10 @@ rtd_features = fe.load_features(fine_dataset, sample_rate, features_directory, d
 ####################################################################################
 
 # Data Visualization:
-util.plot_class(4, raw_dataset)
-util.plot_class(4, fine_dataset)
-util.plot_class(4, mfcc_features)
-util.plot_class(4, rtd_features)
+# util.plot_class(4, raw_dataset)
+# util.plot_class(4, fine_dataset)
+# util.plot_class(4, mfcc_features)
+# util.plot_class(4, rtd_features)
 
 
 # i = 7
@@ -96,6 +98,7 @@ print("rtd_features:")
 util.get_parameters(rtd_features)
 
 # util.view_example("yes23.wav", raw_dataset, mfcc_features, rtd_features)
+util.view_mfcc_example("yes23.wav", raw_dataset, mfcc_features)
 
 
 plt.show()

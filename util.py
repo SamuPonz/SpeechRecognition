@@ -76,6 +76,40 @@ def view_example(name, dataset, mfcc_features, rtd_features):
     axs[2].set_ylabel('frequency', fontsize=y_size)
 
 
+def view_mfcc_example(name, dataset, mfcc_features):
+    # Look at a particular signal, selected by its name, adn its feature vectors
+
+    signal = dataset.get(name)
+    mfcc_feature_vector = mfcc_features.get(name)
+
+    new_name = 'extracted_' + name
+    wavfile.write(new_name, 16000, signal)
+    playsound(new_name)
+
+    fig, axs = plt.subplots(3, 1, constrained_layout=True)
+    fig.suptitle('Example of a signal and its mfcc feature vector', fontsize=10)
+    title_size = 10
+    x_size = 8
+    y_size = 8
+
+    axs[0].plot(signal.transpose())
+    axs[0].grid(True)
+    axs[0].set_title('Raw signal', fontsize=title_size)
+    axs[0].set_xlabel('samples', fontsize=x_size)
+    axs[0].set_ylabel('amplitude', fontsize=y_size)
+
+    axs[1].imshow(mfcc_feature_vector.transpose())
+    axs[1].set_title('mfcc feature vector', fontsize=title_size)
+    axs[1].set_xlabel('time', fontsize=x_size)
+    axs[1].set_ylabel('frequency', fontsize=y_size)
+
+    axs[2].plot(mfcc_feature_vector.transpose())
+    axs[2].set_title('mfcc feature vector', fontsize=title_size)
+    axs[2].set_xlabel('time', fontsize=x_size)
+    axs[2].set_ylabel('frequency', fontsize=y_size)
+
+
+
 # def viewParticularRtdExample(name, normalized_dataset, segmented_dataset, window_size, M, scaled):
 #     # Look at a particular signal, selected by its name, and all the steps of the Rtd feature extraction
 #

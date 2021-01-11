@@ -10,7 +10,7 @@ from scipy.io import wavfile
 import datasetMenagment as ds
 import featureExtraction
 import mfccMethods
-import signalPreprocessing as sp
+import preProcessing as sp
 import rtdMethods as rtd
 import matplotlib.pyplot as plt
 import util
