@@ -50,9 +50,10 @@ print("Pre-processing done!")
 # filtered_dataset, normalized_dataset, fine_dataset = sp.new_pre_processing(raw_dataset, sample_rate)
 # //////////////
 
-mfcc_features = fe.load_mfcc_features(fine_dataset, sample_rate, features_directory, dataset_name, fixed=False)
+mfcc_features = fe.load_mfcc_features(fine_dataset, sample_rate, features_directory, dataset_name, fixed=True)
 # mfcc_features = fe.load_mfcc_features(segmented_dataset, sample_rate, features_directory, dataset_name, fixed=False)
 # mod 1 builds the feature vectors computing the MFCC of every signal (variable size -> has to be fixed)
+
 rtd_features = fe.load_rtd_features(segmented_dataset, features_directory, dataset_name)
 # mod 2 builds the feature vectors computing the RTD of every signal (fixed size)
 
@@ -98,7 +99,7 @@ print("rtd_features:")
 util.get_parameters(rtd_features)
 
 # util.view_example("yes23.wav", raw_dataset, mfcc_features, rtd_features)
-util.view_mfcc_example("yes23.wav", raw_dataset, mfcc_features)
+util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
 
 
 plt.show()

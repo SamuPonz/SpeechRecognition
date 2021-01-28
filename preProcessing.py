@@ -6,12 +6,10 @@ import numpy as np
 # This files contains all the methods regarding the pre-processing phase of the signals
 # Here the dataset containing the raw signals is taken:
 # at first all signals are filtered using a BP filter with a
-# band [300,3400] Hz, BW = 3100 Hz. Check which implementation is better, more efficient. Up to now I can think about
-# FIR filter realized with LCCDE, or with windowing design.
+# band [300,3400] Hz, BW = 3100 Hz. Check which implementation is better, more efficient.
 # Then the silence removal is implemented, have to understand more about this...
-# Finally the end point is detected.
 
-# Need for a function that acts on all the dictonary and dor functions that act on single signals
+# Need for a function applied on all the dictionary and dor functions that act on single signals
 # Work on the single signal function needed for the test/recognition phase.
 # The function working on the entire dataset is needed in the training phase, here it is set the noise threshold
 # used in the test/recognition phase.
@@ -90,8 +88,9 @@ def silence_removal(signal, sample_rate, win_func=lambda x: np.ones((x,))):
     # form of np.logical_and, np.logical_or, and np.logical_not. It is possible to combine boolean arrays element-wise
     # to find rows that satisfy more complicated conditions.
 
-    # Delete parameters (energies and zero crossing rate)
+    # Delete parameters (energies and zero crossing rate) stored in the matrix of frames
     frames = frames[:, 2:]
+    # Reconstruct the signal
     segmented_signal = sigproc.deframesig(frames, frames.size, frame_len, frame_step, win_func)
     return segmented_signal
 
@@ -124,7 +123,7 @@ def old_pre_processing(dataset):
     # elements of every signal. The means are collected in a vector and the threshold is set to E[means] + C*std[means],
     # where C is a particular coverage factor which value is set manually, depending on the dataset.
     C = 3
-    dataset_noise_level = silence_threshold(normalized_dataset, C)
+    dataset_noise_level = old_silence_threshold(normalized_dataset, C)
 
     segmented_dataset = {k: segmentation(v, dataset_noise_level) for k, v in normalized_dataset.items()}
 
@@ -189,7 +188,7 @@ def old_normalization(x):
     return scaled_x
 
 
-def silence_threshold(dataset, C):
+def old_silence_threshold(dataset, C):
     # --- Estimating the silence threshold taking the first 500 samples of each signal in the dataset ---
     # This may not be the best solution...
 

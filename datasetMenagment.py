@@ -3,6 +3,7 @@ import time
 from ast import literal_eval
 
 import pandas as pd
+from natsort import natsorted
 from playsound import playsound
 from scipy.io import wavfile
 from sklearn.model_selection import train_test_split
@@ -32,12 +33,13 @@ def read_audio_files(directory):
     audio_signals = dict()  # Dictionary of the audio signals {filename : audio signal}
     for subName in os.listdir(directory):
         print("reading the '" + subName + "' directory...")
-        subDirectory = directory / subName
-        # os.listdir(subDirectory).sort(key=lambda f: int(re.sub('\D', '', f)))  # sorting the files, not required
-        # print(subDirectory)  # debug
-        for filename in os.listdir(subDirectory):
+        sub_directory = directory / subName
+        # os.listdir(sub_directory).sort(key=lambda f: int(re.sub('\D', '', f)))  # sorting the files, not required
+        print(sub_directory)  # debug
+        sorted_files = natsorted(os.listdir(sub_directory))
+        for filename in sorted_files:
             # print(filename)  # debug
-            sample_rate, audio = wavfile.read(subDirectory / filename)
+            sample_rate, audio = wavfile.read(sub_directory / filename)
             audio_signals[filename] = audio  # add the file in the dictionary
     return audio_signals  # returns the dictionary
 

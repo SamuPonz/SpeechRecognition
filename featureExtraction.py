@@ -36,9 +36,6 @@ def load_rtd_features(dataset, features_directory, dataset_name):
         return features
 
 
-# After creating the pre-processing methods, normalization, silence threshold and segmentation will be done before
-# the featureExtraction, remember to modify this function
-
 def rtd_method(dataset):
     K = 4
     M = 8
@@ -140,11 +137,14 @@ def rtd_method(dataset):
 
 
 def mfcc_method(dataset, sample_rate, fixed):
-    win_len = 0.025  # ms
-    win_step = 0.01  # ms
-    fixed_number_of_frames, window_ratio = mfcc.optimal_parameters(dataset, sample_rate, win_len, win_step)
-    features = {k: mfcc.mfcc_processing(v, sample_rate, fixed_number_of_frames, window_ratio, fixed)
-                for k, v in dataset.items()}
+    common_win_len = 0.025  # ms
+    common_win_step = 0.01  # ms
+
+    fixed_number_of_frames, overlap_factor = mfcc.optimal_number_of_frames(dataset, sample_rate, common_win_len,
+                                                                           common_win_step)
+
+    features = {k: mfcc.mfcc_processing(v, sample_rate, common_win_len, common_win_step, fixed_number_of_frames,
+                                        overlap_factor, fixed) for k, v in dataset.items()}
     return features
 
 
