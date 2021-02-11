@@ -3,9 +3,11 @@
 extracted*
 random_mfcc_example.wav
 random_rtd_example.wav
-mfcc_features_myData.p
-myData.p
-rdt_features_myData.p
+mfcc_features_datasetSamu.p
+raw_datasetSamu.p
+rdt_features_datasetSamu.p
+fine_datasetSamu.p
+segmented_datasetSamu.p
 
 # Python and PyCharm files
 

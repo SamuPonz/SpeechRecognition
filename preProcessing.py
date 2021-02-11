@@ -2,8 +2,9 @@ from scipy.signal import butter, sosfilt, sosfiltfilt, sosfreqz
 from util import measure
 import _library_Sigproc as sigproc
 import numpy as np
+import fileManagment as fm
 
-# This files contains all the methods regarding the pre-processing phase of the signals
+# This file contains all the methods regarding the pre-processing phase of the signals
 # Here the dataset containing the raw signals is taken:
 # at first all signals are filtered using a BP filter with a
 # band [300,3400] Hz, BW = 3100 Hz. Check which implementation is better, more efficient.
@@ -18,6 +19,32 @@ import numpy as np
 # Maybe a file with all the information of the dataset will be used, maybe JSON.
 
 # Normalized Dataset only needed for RTD and not MFCC??
+
+
+def load_preprocessed_dataset(dataset, sample_rate, dataset_directory, dataset_name):
+    fine_dataset_name = "fine_" + dataset_name
+    fine_dataset_file = dataset_directory / fine_dataset_name
+
+    if fine_dataset_file.is_file():
+        return fm.read_file(fine_dataset_file)
+    else:
+        print("No saved pre-processed dataset found. New pre-processing...")
+        fine_dataset = pre_processing(dataset, sample_rate)
+        fm.create_file(fine_dataset_name, fine_dataset)
+        return fine_dataset
+
+
+def load_segmented_dataset(dataset, sample_rate, dataset_directory, dataset_name):
+    segmented_dataset_name = "segmented_" + dataset_name
+    segmented_dataset_file = dataset_directory / segmented_dataset_name
+
+    if segmented_dataset_file.is_file():
+        return fm.read_file(segmented_dataset_file)
+    else:
+        print("No saved segmented dataset found. New segmentation...")
+        segmented_dataset = segmentation(dataset, sample_rate)
+        fm.create_file(segmented_dataset_name, segmented_dataset)
+        return segmented_dataset
 
 
 def pre_processing(dataset, sample_rate):

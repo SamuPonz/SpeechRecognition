@@ -1,8 +1,10 @@
 # first script:
-
+import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 import time
+
+import util
 
 ####################################################################################
 
@@ -16,24 +18,24 @@ import preProcessing as sp
 import featureExtraction as fe
 
 # classification
+import classification as clf
 
 ####################################################################################
-import util
 
 command_recordings_dir = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\(1000,10)_ComandiDatasetSelezionati")
 noise_recordings_dir = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\_background_noise")
 dataset_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
 noise_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
 features_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
-
+images_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Images")
 # Fixed sample rate of the audio signals analyzed
 sample_rate = 16000  # Hz Sampling frequency of this particular dataset
 
-dataset_name = "myData.p"
+dataset_name = "datasetSamu.p"
 noise_name = "myNoise.p"
 
 # Load data:
-print("Loading the dataset...")
+print("Loading the stored dataset...")
 raw_dataset = ds.load_dataset(dataset_directory, command_recordings_dir, dataset_name=dataset_name)
 print("Dataset loaded!")
 
@@ -41,20 +43,27 @@ print("Dataset loaded!")
 # noise_signals = ds.load_noise(noise_directory, noise_recordings_dir, noise_name=noise_name)
 # print("Noise signals loaded!")
 
-print("Pre-processing data...")
-fine_dataset = sp.pre_processing(raw_dataset, sample_rate)
-segmented_dataset = sp.segmentation(fine_dataset, sample_rate)
-print("Pre-processing done!")
+print("Loading stored pre-processing data...")
+fine_dataset = sp.load_preprocessed_dataset(raw_dataset, sample_rate, dataset_directory, dataset_name)
+print("Pre-processed data loaded!")
+
+print("Loading stored segmented data...")
+segmented_dataset = sp.load_segmented_dataset(fine_dataset, sample_rate, dataset_directory, dataset_name)
+print("Segmented data loaded!")
 
 # //////////////
 # filtered_dataset, normalized_dataset, fine_dataset = sp.new_pre_processing(raw_dataset, sample_rate)
 # //////////////
 
+print("Loading stored mfcc features...")
 mfcc_features = fe.load_mfcc_features(fine_dataset, sample_rate, features_directory, dataset_name, fixed=True)
+print("Mfcc features loaded!")
 # mfcc_features = fe.load_mfcc_features(segmented_dataset, sample_rate, features_directory, dataset_name, fixed=False)
-# mod 1 builds the feature vectors computing the MFCC of every signal (variable size -> has to be fixed)
+# mod 1 builds the feature vectors computing the MFCC of every signal (variable or fixed size)
 
+print("Loading stored rtd features...")
 rtd_features = fe.load_rtd_features(segmented_dataset, features_directory, dataset_name)
+print("Rtd features loaded!")
 # mod 2 builds the feature vectors computing the RTD of every signal (fixed size)
 
 # //////////////
@@ -62,29 +71,38 @@ rtd_features = fe.load_rtd_features(segmented_dataset, features_directory, datas
 # dataset_features = rtd_features[1]
 # //////////////
 
-
 # print("Loading the train/test sets...")
 # train_dataset, test_dataset = fe.loadSubsets(features, features_directory)
 # print("Train/test sets loaded!")
 
+####################################################################################
+
+clf.classification_method(rtd_features)
 
 ####################################################################################
 
+plt.ioff()
+
 # Data Visualization:
-# util.plot_class(4, raw_dataset)
-# util.plot_class(4, fine_dataset)
-# util.plot_class(4, mfcc_features)
-# util.plot_class(4, rtd_features)
 
 
-# i = 7
-# util.plot_class(i, raw_dataset)
-# util.plot_class(i, filtered_dataset)
-# util.plot_class(i, normalized_dataset)
-# util.plot_class(i, fine_dataset)
-# util.plot_class(i, dataset_spectrograms)
-# util.plot_class(i, dataset_features)
+labels = ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes"]
 
+for label in labels:
+    raw_image_name = "raw " + label + ".png"
+    segmented_image_name = "segmented " + label
+
+    # util.plot_class(label, raw_dataset)
+    # plt.savefig(images_directory / raw_image_name)
+    # plt.close()
+    # util.plot_class(label, segmented_dataset)
+    # plt.savefig(images_directory / segmented_image_name)
+    # plt.close()
+
+    # util.plot_class(label, rtd_features)
+
+
+# Print parameters
 
 print("raw dataset:")
 util.get_parameters(raw_dataset)
@@ -92,14 +110,21 @@ util.get_parameters(raw_dataset)
 print("fine dataset:")
 util.get_parameters(fine_dataset)
 
+print("segmented dataset:")
+util.get_parameters(segmented_dataset)
+
 print("mfcc_features:")
 util.get_parameters(mfcc_features)
 
 print("rtd_features:")
 util.get_parameters(rtd_features)
+#
+#
+# Exemples:
 
-# util.view_example("yes23.wav", raw_dataset, mfcc_features, rtd_features)
-util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
+util.view_example("on61.wav", raw_dataset, segmented_dataset, mfcc_features, rtd_features)
+
+# util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
 
 
 plt.show()

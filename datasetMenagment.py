@@ -13,17 +13,17 @@ import numpy as np
 
 def load_dataset(dataset_directory, audiofiles_directory, dataset_name):
     # Loads the dataset or creates a new one using the audio files stored in the specified directory
-
-    dataset_file = dataset_directory / dataset_name
+    raw_dataset_name = "raw_" + dataset_name
+    dataset_file = dataset_directory / raw_dataset_name
 
     if not (dataset_file.is_file()):  # if file does not exist
-        print("No saved dataset found. Building a new dataset named: ", dataset_name)
+        print("No stored dataset found. Building a new dataset named: ", raw_dataset_name)
         dataset = read_audio_files(audiofiles_directory)
-        fm.create_file(dataset_name, dataset)  # saves the dictionary in a file
+        fm.create_file(raw_dataset_name, dataset)  # saves the dictionary in a file
     # return literal_eval(fm.readFile(dataset_name))  # Safely evaluate an expression node or a string containing a
     # Python literal or container display. The string or node provided may only consist of the following Python literal
     # structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, None, bytes and sets.
-    return fm.read_file(dataset_name)  # this is now a string, not a dictionary, nevertheless dict methods work fine
+    return fm.read_file(raw_dataset_name)  # this is now a string, not a dictionary, nevertheless dict methods work fine
 
 
 def read_audio_files(directory):
@@ -40,7 +40,7 @@ def read_audio_files(directory):
         for filename in sorted_files:
             # print(filename)  # debug
             sample_rate, audio = wavfile.read(sub_directory / filename)
-            audio_signals[filename] = audio  # add the file in the dictionary
+            audio_signals[os.path.splitext(filename)[0]] = audio  # add the file in the dictionary
     return audio_signals  # returns the dictionary
 
 

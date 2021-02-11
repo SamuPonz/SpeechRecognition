@@ -1,8 +1,6 @@
 import rtdMethods as rtd
 import mfccMethods as mfcc
 import fileManagment as fm
-import pandas as pd
-from sklearn.model_selection import train_test_split
 from util import measure
 
 
@@ -12,10 +10,9 @@ def load_mfcc_features(dataset, sample_rate, features_directory, dataset_name, f
     features_file = features_directory / features_name
 
     if features_file.is_file():
-        print("Loading stored features...")
         return fm.read_file(features_file)
     else:
-        print("No saved features found. New feature extraction...")
+        print("No saved mfcc features found. New feature extraction...")
         features = mfcc_method(dataset, sample_rate, fixed)
         fm.create_file(features_name, features)
         return features
@@ -27,10 +24,9 @@ def load_rtd_features(dataset, features_directory, dataset_name):
     features_file = features_directory / features_name
 
     if features_file.is_file():
-        print("Loading stored features...")
         return fm.read_file(features_file)
     else:
-        print("No saved features found. New feature extraction...")
+        print("No saved rtd features found. New feature extraction...")
         features = rtd_method(dataset)
         fm.create_file(features_name, features)
         return features
@@ -147,24 +143,3 @@ def mfcc_method(dataset, sample_rate, fixed):
                                         overlap_factor, fixed) for k, v in dataset.items()}
     return features
 
-
-def data_split(features, train_size=0.7):
-    # Creating testing and training sets
-
-    s = pd.Series(features)
-    training_dataset, test_dataset = [i.to_dict() for i in train_test_split(s, train_size=train_size)]
-    return training_dataset, test_dataset
-
-
-def load_subsets(features, features_directory):
-    # Loads saved train and test sets, creates them if there are none
-    train_name = "train_features.p"
-    test_name = "test_features.p"
-    train_file = features_directory / train_name
-    test_file = features_directory / test_name
-    if not train_file.is_file() or not test_file.is_file():
-        print("No saved train/test sets found. Building two new random sets...")
-        train_dataset, test_dataset = data_split(features, train_size=0.7)
-        fm.create_file(train_name, train_dataset)
-        fm.create_file(test_name, test_dataset)
-    return fm.read_file(train_file), fm.read_file(test_file)

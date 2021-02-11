@@ -42,18 +42,19 @@ def handle_warning(message, category, filename, lineno, file=None, line=None):
         raise category(message)
 
 
-def view_example(name, dataset, mfcc_features, rtd_features):
+def view_example(name, dataset, segmented_dataset, mfcc_features, rtd_features):
     # Look at a particular signal, selected by its name, adn its feature vectors
 
     signal = dataset.get(name)
+    segmented_signal = segmented_dataset.get(name)
     mfcc_feature_vector = mfcc_features.get(name)
     rtd_feature_vector = rtd_features.get(name)
 
     new_name = 'extracted_' + name
-    wavfile.write(new_name, 16000, signal)
+    wavfile.write(new_name, 16000, signal + ".wav")
     playsound(new_name)
 
-    fig, axs = plt.subplots(3, 1, constrained_layout=True)
+    fig, axs = plt.subplots(4, 1, constrained_layout=True)
     fig.suptitle('Example of a signal and its feature vectors', fontsize=10)
     title_size = 10
     x_size = 8
@@ -65,15 +66,21 @@ def view_example(name, dataset, mfcc_features, rtd_features):
     axs[0].set_xlabel('samples', fontsize=x_size)
     axs[0].set_ylabel('amplitude', fontsize=y_size)
 
-    axs[1].imshow(mfcc_feature_vector.transpose())
-    axs[1].set_title('mfcc feature vector', fontsize=title_size)
-    axs[1].set_xlabel('time', fontsize=x_size)
-    axs[1].set_ylabel('frequency', fontsize=y_size)
+    axs[1].plot(segmented_signal.transpose())
+    axs[1].grid(True)
+    axs[1].set_title('Segmented signal', fontsize=title_size)
+    axs[1].set_xlabel('samples', fontsize=x_size)
+    axs[1].set_ylabel('amplitude', fontsize=y_size)
 
-    axs[2].imshow(rtd_feature_vector)
-    axs[2].set_title('rtd feature vector', fontsize=title_size)
+    axs[2].imshow(mfcc_feature_vector.transpose())
+    axs[2].set_title('mfcc feature vector', fontsize=title_size)
     axs[2].set_xlabel('time', fontsize=x_size)
     axs[2].set_ylabel('frequency', fontsize=y_size)
+
+    axs[3].imshow(rtd_feature_vector)
+    axs[3].set_title('rtd feature vector', fontsize=title_size)
+    axs[3].set_xlabel('time', fontsize=x_size)
+    axs[3].set_ylabel('frequency', fontsize=y_size)
 
 
 def view_mfcc_example(name, dataset, mfcc_features):
@@ -228,9 +235,12 @@ def get_parameters(dictio):
 
     rows_size = []
     columns_size = []
+    # counter = 0
     for i in dictio.values():
         R = i.shape[0]  # number of rows (e.g. number of time windows in the spectrogram)
+        # print(counter, " - ", R)
         rows_size.append(R)
+        # counter += 1
         if len(i.shape) > 1:
             C = i.shape[1]  # number of columns (e.g. number of spectrums  in the spectrogram computed from the windows)
             columns_size.append(C)
@@ -248,7 +258,8 @@ def plot_dataset(dictio):
         i = 100*i
         counter = 1
         plt.figure(figsize=(15, 4))
-        for value in list(dictio.values())[i:i + 99]:
+        for key in list(dictio)[i:i + 99]:
+            value = dictio.get(key)
             if counter == i+100:
                 break
             plt.subplot(10, 10, counter)
@@ -257,6 +268,8 @@ def plot_dataset(dictio):
             else:
                 plt.plot(value.transpose())
             plt.grid(True)
+            plt.xlabel(key)
+
             counter += 1
 
 
@@ -274,25 +287,25 @@ def plot_noise(dictio):
 def plot_class(command_class, dictio):
     # --- Plot an entire class of the dataset ---
     # command_class = 8  # select i from 0 to 9
-    if command_class != 0:
-        command_index = command_class * 100
-    else:
-        command_index = 0
-    counter = 0
+    # if command_class != 0:
+    #     command_index = command_class * 100
+    # else:
+    #     command_index = 0
+    # counter = 0
     figure = plt.figure(figsize=(20, 10))
     figure.canvas.manager.full_screen_toggle()
-    for value in list(dictio.values())[command_index:command_index + 100]:
-        if counter == command_index + 100:
-            break
+    figure.suptitle(command_class+" commands", fontsize=10)
+    foodict = {k: v for k, v in dictio.items() if k.startswith(command_class)}
+    counter = 0
+    for value in foodict.values():
         counter += 1
-        plt.subplot(10, 10, counter)
-
+        plt.subplot(10, (len(foodict) + 1) // 10, counter)
         if len(value.shape) > 1:  # if data has a second dimension
             plt.imshow(value)
         else:
             plt.plot(value.transpose())
 
-        plt.grid(True)
+    plt.grid(True)
 
 
 def casting_influence(dictio):
