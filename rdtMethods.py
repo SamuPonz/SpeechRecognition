@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rtd_new(signal, window_size, scaled):
+def rdt_new(signal, window_size, scaled):
     # Computation of the Reaction Diffusion Transform.
     # This method returns an approximation of the spectrum of the input signal
     # Parameters:
@@ -34,8 +34,8 @@ def rtd_new(signal, window_size, scaled):
             t = np.array(range(delay, window_size - delay - 1))  # array of time considered
 
             # The following command-line computes the absolute value of the Lagrange operator.
-            # This is computed in a different way in respect to the classic RTD. This RTD_new uses all the samples
-            # in the array t, the classic RTD the array t is down-sampled by the delay factor.
+            # This is computed in a different way in respect to the classic RDT. This RDT_new uses all the samples
+            # in the array t, the classic RDT the array t is down-sampled by the delay factor.
             diffusion = np.abs(values[t - delay] + values[t + delay] - 2 * values[t])
 
             # the final step in the computation of the k-th clustering coefficient of the spectrum of the i-th window

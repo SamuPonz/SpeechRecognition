@@ -6,7 +6,7 @@ from random import randrange
 from playsound import playsound
 from scipy.io import wavfile
 import numpy as np
-import rtdMethods as rtd
+import rdtMethods as rtd
 import matplotlib.pyplot as plt
 
 

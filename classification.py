@@ -2,17 +2,53 @@ import pandas as pd
 import fileManagment as fm
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+import numpy as np
+
 
 # The machine learning pipeline has the following steps: preparing data, creating training/testing sets, instantiating
 # the classifier, training the classifier, making predictions, evaluating performance, tweaking parameters.
 
 #check out k-fold cross validation
 
-def classification_method(features):
+
+def classification_method(labels, features):
+    label_indices = {}
+    i = 0
+    for item in labels:
+        if (i > 0 and item in label_indices):
+            continue
+        else:
+            i = i + 1
+            label_indices[item] = i
+
+    n_of_features = next(iter(features.values())).shape[1]
+    n_of_segments = 0
+    for value in features.values():
+        n_of_segments += value.shape[0]
+
+    # convert to matrix: pre-allocation used
+    dataset_matrix = np.zeros(shape=(n_of_segments, n_of_features + 1))
+    last_filled = 0
+    for key in features:
+        command_class = ''.join([i for i in key if not i.isdigit()])
+        command_index = label_indices[command_class]
+        value = features[key]
+        dataset_matrix[last_filled:last_filled+value.shape[0], 0:-1] = value
+        dataset_matrix[last_filled:last_filled+value.shape[0], -1] = command_index
+        # This works only in the case of fixed n_of_segments:
+        # t = 0
+        # dataset_matrix[value.shape[0]*t:value.shape[0]*(t+1), 0:-1] = value
+        # dataset_matrix[value.shape[0]*t:value.shape[0]*(t+1), -1] = command_index
+        # t += 1
+        last_filled += value.shape[0]
+
+    # need to add a first row with titles or convert into a Pandas dataframe
+
+    # convert to dataframe (copied, to be revised)
+    dataframe = pd.DataFrame({'Column1': dataset_matrix[:, 0], 'Column2': dataset_matrix[:, 1]})
 
 
-    features = pd.DataFrame([features])
-    print(features.head())
+# ------------------------------------------------------------------
 
 
 # Old functions, here dictionaries are used.

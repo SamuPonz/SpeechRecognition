@@ -1,4 +1,4 @@
-import rtdMethods as rtd
+import rdtMethods as rdt
 import mfccMethods as mfcc
 import fileManagment as fm
 from util import measure
@@ -19,28 +19,28 @@ def load_mfcc_features(dataset, sample_rate, features_directory, dataset_name, f
 
 
 @measure
-def load_rtd_features(dataset, features_directory, dataset_name):
+def load_rdt_features(dataset, features_directory, dataset_name):
     features_name = 'rdt_features_' + dataset_name
     features_file = features_directory / features_name
 
     if features_file.is_file():
         return fm.read_file(features_file)
     else:
-        print("No saved rtd features found. New feature extraction...")
-        features = rtd_method(dataset)
+        print("No saved rdt features found. New feature extraction...")
+        features = rdt_method(dataset)
         fm.create_file(features_name, features)
         return features
 
 
-def rtd_method(dataset):
+def rdt_method(dataset):
     K = 4
     M = 8
-    scaled = 0  # if this flag is = 0 classic RTD is computed, if it is = 1 scaled RTD is computed
+    scaled = 0  # if this flag is = 0 classic RDT is computed, if it is = 1 scaled RDT is computed
 
     # M and K are two predetermined parameters that have to be optimized manually looking at the performance of the
     # entire classification process.
 
-    # K is the number of channels of the RTD, it is the number of rows of the feature vectors.
+    # K is the number of channels of the RDT, it is the number of rows of the feature vectors.
     # K = floor(log2(W))-3, it depends on W (window size applied to the audio signal), which ranges in 16 <= W <= N.
     # where N is the number of samples of the signal. To be sure that this condition is respected, the N value to use
     # should be the lowest of the dataset of audio signals.
@@ -49,7 +49,7 @@ def rtd_method(dataset):
     # represents the frequency content of that window of the signal.
     # UPPER BOUND OF K: K = floor(log2(N))-3, when W = N.
     # floor(log2(N))-3 is the maximum "frequency resolution" (n. of rows of the spectrograms) that can be obtained.
-    # In this case, only one spectrum will be computed with the RTD, segmentation of the spectrogram is not needed
+    # In this case, only one spectrum will be computed with the RDT, segmentation of the spectrogram is not needed
     # (M = 1).
     # The feature vector will be only a column signal, we will have floor(log2(N))-3 clustering coefficients
     # representing the spectral content of the whole signal.
@@ -68,7 +68,7 @@ def rtd_method(dataset):
 
     # SUMMARIZING:
     # The value of W (window-size) is automatically limited to the interval 16 <= W <= N by the mathematical rules of
-    # RTD, if W = N, K = floor(log2(N))-3; if W = 16, K = 1.
+    # RDT, if W = N, K = floor(log2(N))-3; if W = 16, K = 1.
     # The value of K bounds the value of M to the interval 1 <= M <= N//W = N//(2**(K+3));
     # The value of M does not limit the value of K or W.
     # In order to be sure that M and K are possible values, choose them looking at the minimum number of samples of all
@@ -97,12 +97,12 @@ def rtd_method(dataset):
     # spectral resolution.
     # 2) if W = N, K = floor(log2(N))-3 =  We only have 1 window, therefore M = 1.
 
-    W = 2 ** (K + 3)  # window size, delay in the RTD
+    W = 2 ** (K + 3)  # window size, delay in the RDT
     # K = log2(W)-3
 
-    # The RTD_new algorithm is performed in order to build the spectrograms of the signals, seems to work properly:
+    # The RDT_new algorithm is performed in order to build the spectrograms of the signals, seems to work properly:
     # W is the window size
-    dataset_spectrograms = {k: rtd.rtd_new(v, W, scaled) for k, v in dataset.items()}
+    dataset_spectrograms = {k: rdt.rdt_new(v, W, scaled) for k, v in dataset.items()}
 
     # This function builds the the fixed sized feature vector starting from the spectrograms, which can be different in
     # size (different number of columns, this represents the time dimension of the spectrograms that depends on the
@@ -123,7 +123,7 @@ def rtd_method(dataset):
     # time axis, more that the actual averaging method. Actually, thinking about it, the time distortion it is already
     # introduced by the segmentation stage itself...
 
-    dataset_features = {key: rtd.build_feature_vector(v, M, key) for key, v in dataset_spectrograms.items()}
+    dataset_features = {key: rdt.build_feature_vector(v, M, key) for key, v in dataset_spectrograms.items()}
 
     return dataset_features
 

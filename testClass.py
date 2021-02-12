@@ -11,7 +11,7 @@ import datasetMenagment as ds
 import featureExtraction
 import mfccMethods
 import preProcessing as sp
-import rtdMethods as rtd
+import rdtMethods as rtd
 import matplotlib.pyplot as plt
 import util
 import warnings

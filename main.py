@@ -34,6 +34,8 @@ sample_rate = 16000  # Hz Sampling frequency of this particular dataset
 dataset_name = "datasetSamu.p"
 noise_name = "myNoise.p"
 
+labels = ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes"]
+
 # Load data:
 print("Loading the stored dataset...")
 raw_dataset = ds.load_dataset(dataset_directory, command_recordings_dir, dataset_name=dataset_name)
@@ -62,7 +64,7 @@ print("Mfcc features loaded!")
 # mod 1 builds the feature vectors computing the MFCC of every signal (variable or fixed size)
 
 print("Loading stored rtd features...")
-rtd_features = fe.load_rtd_features(segmented_dataset, features_directory, dataset_name)
+rdt_features = fe.load_rdt_features(segmented_dataset, features_directory, dataset_name)
 print("Rtd features loaded!")
 # mod 2 builds the feature vectors computing the RTD of every signal (fixed size)
 
@@ -77,16 +79,17 @@ print("Rtd features loaded!")
 
 ####################################################################################
 
-clf.classification_method(rtd_features)
+# Rtd Features only have to be transposed
+rdt_features_T = {k: v.transpose() for k, v in rdt_features.items()}
+
+# clf.classification_method(labels, rdt_features_T)
+clf.classification_method(labels, mfcc_features)
 
 ####################################################################################
 
 plt.ioff()
 
 # Data Visualization:
-
-
-labels = ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes"]
 
 for label in labels:
     raw_image_name = "raw " + label + ".png"
@@ -117,12 +120,12 @@ print("mfcc_features:")
 util.get_parameters(mfcc_features)
 
 print("rtd_features:")
-util.get_parameters(rtd_features)
+util.get_parameters(rdt_features)
 #
 #
 # Exemples:
 
-util.view_example("on61.wav", raw_dataset, segmented_dataset, mfcc_features, rtd_features)
+util.view_example("on61.wav", raw_dataset, segmented_dataset, mfcc_features, rdt_features)
 
 # util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
 

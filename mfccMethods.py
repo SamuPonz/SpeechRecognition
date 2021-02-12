@@ -95,7 +95,7 @@ def min_signal_length(dataset):
 
 def floor_to_power_of_2(sample_rate, win_len):
     """
-    Compute the greater power of two smaller than the number of samples of the given window.
+    Compute the greatest power of two smaller than the number of samples of the given window.
     :param sample_rate: sampling rate of the audio signals
     :param win_len: window size for the given application(audio signals' framing), indication of the wanted window size
     :return: greater power of 2 smaller than the number of samples of the given window
