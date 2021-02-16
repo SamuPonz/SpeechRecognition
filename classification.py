@@ -15,7 +15,7 @@ def classification_method(labels, features):
     label_indices = {}
     i = 0
     for item in labels:
-        if (i > 0 and item in label_indices):
+        if i > 0 and item in label_indices:
             continue
         else:
             i = i + 1
@@ -42,11 +42,15 @@ def classification_method(labels, features):
         # t += 1
         last_filled += value.shape[0]
 
-    # need to add a first row with titles or convert into a Pandas dataframe
+    # add a first row with titles or convert into a Pandas dataframe
+    titles = ["feature"+str(i+1) for i in range(next(iter(features.values())).shape[1])]
+    titles.append("label")
+    print(titles)
+    dataset_matrix_with_titles = np.vstack([titles, dataset_matrix])
 
-    # convert to dataframe (copied, to be revised)
-    dataframe = pd.DataFrame({'Column1': dataset_matrix[:, 0], 'Column2': dataset_matrix[:, 1]})
-
+    # convert to data frame (copied, to be revised)
+    dataframe = pd.DataFrame(dataset_matrix, columns=titles)
+    print(dataframe)
 
 # ------------------------------------------------------------------
 

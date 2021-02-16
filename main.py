@@ -125,7 +125,7 @@ util.get_parameters(rdt_features)
 #
 # Exemples:
 
-util.view_example("on61.wav", raw_dataset, segmented_dataset, mfcc_features, rdt_features)
+util.view_example("on61", raw_dataset, segmented_dataset, mfcc_features, rdt_features)
 
 # util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
 

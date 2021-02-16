@@ -104,7 +104,7 @@ def rdt_method(dataset):
     # W is the window size
     dataset_spectrograms = {k: rdt.rdt_new(v, W, scaled) for k, v in dataset.items()}
 
-    # This function builds the the fixed sized feature vector starting from the spectrograms, which can be different in
+    # This function builds the fixed sized feature vector starting from the spectrograms, which can be different in
     # size (different number of columns, this represents the time dimension of the spectrograms that depends on the
     # number of samples of the signals. In order to have a fixed number of columns a number is selected (M) and the
     # averages of groups of columns is performed in order to obtain M columns in every spectrogram.

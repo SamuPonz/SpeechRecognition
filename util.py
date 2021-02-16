@@ -50,8 +50,8 @@ def view_example(name, dataset, segmented_dataset, mfcc_features, rtd_features):
     mfcc_feature_vector = mfcc_features.get(name)
     rtd_feature_vector = rtd_features.get(name)
 
-    new_name = 'extracted_' + name
-    wavfile.write(new_name, 16000, signal + ".wav")
+    new_name = 'extracted_' + name + ".wav"
+    wavfile.write(new_name, 16000, signal)
     playsound(new_name)
 
     fig, axs = plt.subplots(4, 1, constrained_layout=True)
