@@ -11,7 +11,42 @@ import numpy as np
 #check out k-fold cross validation
 
 
-def classification_method(labels, features):
+def classification_method(features, labels):
+
+    # Data preparation
+    dataset_matrix = data_preparation(features, labels)
+
+    # Classification starts here:
+    # (from SciKit docs: ) SVC, NuSVC and LinearSVC take as input two arrays: an array X of shape(n_samples, n_
+    # features)
+    # holding the training samples, and an array y of class labels(strings or integers), of shape (n_samples)
+
+    X = dataset_matrix[:, :-1]
+    Y = dataset_matrix[:, -1]
+
+    # Creation of the training/testing sets
+    x_train, x_val, x_test, y_train, y_val, y_test = data_split(X, Y)
+
+    # Multi-class classification:
+    # SVC and NuSVC implement the “one - versus - one” approach for multi-class classification. In total,
+    # n_classes * (n_classes - 1) / 2 classifiers are constructed and each one trains data from two classes.
+    # To provide a consistent interface with other classifiers, the decision_function_shape option allows to
+    # monotonically transform the results of the “one-versus-one” classifiers to a “one-vs-rest” decision function of
+    # shape (n_samples, n_classes).
+    clf = SVC(decision_function_shape='ovo')
+    clf.fit(x_train, y_train)
+
+    dec = clf.decision_function([[1]])
+    print(dec.shape[1])  # 10 classes: 10*(10-1)/2 = 45 classifiers
+
+    clf.decision_function_shape = "ovr"
+    dec = clf.decision_function([[1]])
+    print(dec.shape[1])  # 10 classes
+
+# ------------------------------------------------------------------
+
+
+def data_preparation(features, labels):
     label_indices = {}
     i = 0
     for item in labels:
@@ -48,16 +83,31 @@ def classification_method(labels, features):
     print(titles)
     dataset_matrix_with_titles = np.vstack([titles, dataset_matrix])
 
-    # convert to data frame (copied, to be revised)
-    dataframe = pd.DataFrame(dataset_matrix, columns=titles)
-    print(dataframe)
+    # convertion to data frame
+    # dataframe = pd.DataFrame(dataset_matrix, columns=titles)
+    # print(dataframe)
 
-# ------------------------------------------------------------------
+    return dataset_matrix
 
 
-# Old functions, here dictionaries are used.
+def data_split(dataX, dataY):
+    train_ratio = 0.75
+    validation_ratio = 0.15
+    test_ratio = 0.10
 
-def data_split(features, train_size=0.7):
+    # train is now 75% of the entire data set
+    # the _junk suffix means that we drop that variable completely
+    x_train, x_test, y_train, y_test = train_test_split(dataX, dataY, test_size=1 - train_ratio)
+
+    # test is now 10% of the initial data set
+    # validation is now 15% of the initial data set
+    x_val, x_test, y_val, y_test = train_test_split(x_test, y_test,
+                                                    test_size=test_ratio / (test_ratio + validation_ratio))
+
+    return x_train, x_val, x_test, y_train, y_val, y_test
+
+
+def old_data_split(features, train_size=0.7):
     # Creating testing and training sets
 
     s = pd.Series(features)

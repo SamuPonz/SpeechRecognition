@@ -83,7 +83,7 @@ print("Rtd features loaded!")
 rdt_features_T = {k: v.transpose() for k, v in rdt_features.items()}
 
 # clf.classification_method(labels, rdt_features_T)
-clf.classification_method(labels, mfcc_features)
+clf.classification_method(mfcc_features, labels)
 
 ####################################################################################
 
