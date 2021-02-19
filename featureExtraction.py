@@ -34,8 +34,9 @@ def load_rdt_features(dataset, features_directory, dataset_name):
 
 def rdt_method(dataset):
     K = 4
-    M = 8
-    scaled = 0  # if this flag is = 0 classic RDT is computed, if it is = 1 scaled RDT is computed
+    M = 10
+    scaled = 1  # if this flag is = 0 classic RDT is computed, if it is = 1 scaled RDT is computed
+    # Both in the papers and in our application, the SRDT seems to produce better results in the classification stage
 
     # M and K are two predetermined parameters that have to be optimized manually looking at the performance of the
     # entire classification process.
@@ -102,7 +103,7 @@ def rdt_method(dataset):
 
     # The RDT_new algorithm is performed in order to build the spectrograms of the signals, seems to work properly:
     # W is the window size
-    dataset_spectrograms = {k: rdt.rdt_new(v, W, scaled) for k, v in dataset.items()}
+    dataset_spectrograms = {k: rdt.rdt_new(k, v, W, scaled) for k, v in dataset.items()}
 
     # This function builds the fixed sized feature vector starting from the spectrograms, which can be different in
     # size (different number of columns, this represents the time dimension of the spectrograms that depends on the
@@ -123,7 +124,7 @@ def rdt_method(dataset):
     # time axis, more that the actual averaging method. Actually, thinking about it, the time distortion it is already
     # introduced by the segmentation stage itself...
 
-    dataset_features = {key: rdt.build_feature_vector(v, M, key) for key, v in dataset_spectrograms.items()}
+    dataset_features = {k: rdt.build_feature_vector(k, v, M) for k, v in dataset_spectrograms.items()}
 
     return dataset_features
 

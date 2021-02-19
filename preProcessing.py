@@ -1,5 +1,9 @@
+import skimage.transform
+from playsound import playsound
+from scipy.io import wavfile
 from scipy.signal import butter, sosfilt, sosfiltfilt, sosfreqz
 from util import measure
+import matplotlib.pyplot as plt
 import _library_Sigproc as sigproc
 import numpy as np
 import fileManagment as fm
@@ -51,14 +55,29 @@ def pre_processing(dataset, sample_rate):
     filtered_dataset = {k: noise_reduction(v, sample_rate) for k, v in dataset.items()}
     normalized_dataset = {k: new_normalization(v) for k, v in filtered_dataset.items()}
     return normalized_dataset
-    # //////////////
-    # return filtered_dataset, normalized_dataset
-    # //////////////
 
 
 def segmentation(normalized_dataset, sample_rate):
-    segmented_dataset = {k: silence_removal(v, sample_rate) for k, v in normalized_dataset.items()}
+    segmented_dataset = {k: silence_removal(k, v, sample_rate) for k, v in normalized_dataset.items()}
     return segmented_dataset
+
+
+def stretching_correction(segmented_dataset, average_length):
+    stretched_dataset = {k: stretch(k, v, average_length) for k, v in segmented_dataset.items()}
+    return stretched_dataset
+
+
+def stretch(name, signal, min_length):
+    # print(name)
+    # print("n. of samples: %d" % signal.shape[0])
+
+    if signal.shape[0] < min_length:
+        # plt.figure()
+        # plt.plot(signal)
+        signal = skimage.transform.resize(signal, (min_length, 1), anti_aliasing=False).squeeze()
+        # plt.figure()
+        # plt.plot(signal)
+    return signal
 
 
 def new_normalization(x):
@@ -78,13 +97,18 @@ def noise_reduction(signal, sample_rate):
     return filtered_signal
 
 
-def silence_removal(signal, sample_rate, win_func=lambda x: np.ones((x,))):
+def silence_removal(name, signal, sample_rate, win_func=lambda x: np.ones((x,))):
+
+    # Debugging
+    # if name == "on27":
+    #     print()
+
     # Define thresholds for energy and zero crossing rate
-    energy_th = 0.2  # if higher, more segmentation
-    zero_crossing_th = 80  # if lower, more segmentation
+    energy_th = 0.3  # if higher, more segmentation
+    zero_crossing_th = 70  # if lower, more segmentation
     # Define window dimension in time for framing the signal, computing the number of samples
-    win_len = 0.01  # 25 ms
-    win_step = 0.01  # 25 ms # if equal to win_len, no overlap
+    win_len = 0.01  # 10 ms
+    win_step = 0.01  # 10 ms # if equal to win_len, no overlap
     # windows of 25 ms without overlapping generate frames of 400 samples, up to 40 frames in this dataset
     frame_len = win_len * sample_rate
     frame_step = win_step * sample_rate
@@ -119,6 +143,12 @@ def silence_removal(signal, sample_rate, win_func=lambda x: np.ones((x,))):
     frames = frames[:, 2:]
     # Reconstruct the signal
     segmented_signal = sigproc.deframesig(frames, frames.size, frame_len, frame_step, win_func)
+
+    # If the original signal had not a number of samples equal to a multiple of frame_len (in case of no overlapping)
+    # then the "frames" matrix will be padded with zeros in the last row. In the case in which the last row is not
+    # elided by the segmentation stage, this zeros cause problems in the SRDT (S stands for "scaled") computation,
+    # therefore here we remove the zero-padding (which does not contain information).
+    segmented_signal = np.trim_zeros(segmented_signal)
     return segmented_signal
 
 
@@ -134,7 +164,7 @@ def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
     return y
 
 
-# //////////////////////////////////////////////////////////////
+# Not used ---------------------------------------------------------------------------------------------------------
 
 
 def old_pre_processing(dataset):
@@ -245,20 +275,16 @@ def old_segmentation(signal, noise):
     return signal[np.abs(signal) > noise]
 
 
-# //////////////////////////////////////////////////////////////
-
-
+# Alternative method to implement the band-pass filter
 # def simple_band_pass(signal,  lowcut, highcut, sample_rate):
 #     # Second order band pass filter
-#
 #     bandwidth = highcut - lowcut
 #     central_frequency = bandwidth/2.
 #     w_c = 2 * np.pi * central_frequency
 #     bw = 2 * np.pi * bandwidth
-#
-#     # beta = np.cos(w_c)
-#     # alpha = (1. - np.sin(bw)) / np.cos(bw)
-#     # G = (1. - alpha) / 2.
-#     # filtered_signal = scipy.signal.lfilter([G, 0, -G], [1, -beta * (1 + alpha), alpha], signal)
-#     # return filtered_signal
-#     return
+#     beta = np.cos(w_c)
+#     alpha = (1. - np.sin(bw)) / np.cos(bw)
+#     G = (1. - alpha) / 2.
+#     filtered_signal = scipy.signal.lfilter([G, 0, -G], [1, -beta * (1 + alpha), alpha], signal)
+#     return filtered_signal
+

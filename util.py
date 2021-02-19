@@ -308,14 +308,19 @@ def plot_class(command_class, dictio):
     plt.grid(True)
 
 
+def reproduce_audio(name, stretched):
+    example = stretched[name]
+    wavfile.write('stretched_audio.wav', 16000, example)
+    playsound('stretched_audio.wav')
+
+
 def casting_influence(dictio):
     # --- Observe how casting influences the reproduction of audio file
 
     # The wavfile.read function used to create the dataset returns a nparray which type is the one which minimal
     # size needed.
     # We cast the numpy.int16 type to numpy.single to overcome overflow in the normalization procedure
-    # After the casting, an audio signal cannot be reproduced anymore, why? Dunno yet
-    # Re-casting a signal from single precision float to int16, it can be successfully be reproduced again
+    # After the casting, an audio signal cannot be reproduced anymore, why?
     # We maintain the type numpy.single because after normalization the signal varies in [-1,1], this cannot be
     # reconverted to any int type of any size
 

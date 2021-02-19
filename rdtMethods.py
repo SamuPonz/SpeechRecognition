@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rdt_new(signal, window_size, scaled):
+def rdt_new(name, signal, window_size, scaled):
     # Computation of the Reaction Diffusion Transform.
     # This method returns an approximation of the spectrum of the input signal
     # Parameters:
@@ -9,6 +9,11 @@ def rdt_new(signal, window_size, scaled):
     # - w: the fixed number of samples in an output spectrum, 
     #      this parameter regulates the trade-off between time and frequency resolution
     # - flag: if '1' it is computed the scaled version of the transform, it is '0' by default.
+
+    # Debugging
+    # print(name)
+    # if name == "down0":
+    #     print("hello there, breakpoint here...")
 
     signal_samples = np.size(signal)  # number of samples of the signal
     n = int(np.log2(window_size))  # Casting to an int will truncate toward zero. floor() will truncate toward negative
@@ -24,8 +29,9 @@ def rdt_new(signal, window_size, scaled):
     # the approximated spectrum of evey window is computed and stored as a column in a new matrix called 'spectrum'
 
     spectrogram = np.zeros((n - 3, windows))
-    # in this matrix are stored all the spectrums computed
-    # every spectrum has a size equal to n-3, log2(k)-3
+    # in this matrix are stored all the "spectrums" computed, in every column the is the set of clustering coefficients
+    # computed for every window.
+    # every "spectrum" has a size equal to k = n-3 = floor(log2(w))-3
 
     for i in range(0, windows):  # for every window of the signal
         values = matrix[i, :]  # take a window of the signal, a row of the windows matrix
@@ -50,8 +56,13 @@ def rdt_new(signal, window_size, scaled):
     return spectrogram
 
 
-def build_feature_vector(spectrogram, M, key):
-    print(key)
+def build_feature_vector(name, spectrogram, M):
+
+    # Debugging:
+    # print(name)
+    # if name == "down0":
+    #     print("hello there, breakpoint here...")
+
     k = spectrogram.shape[0]  # number of channels of every spectrum in the spectrograms
     T = spectrogram.shape[1]  # number of spectrums (computed from the windows) in the spectrogram
     Ts = T // M  # number of spectrums per segment on which it is done the average, has to be at least 1
