@@ -1,12 +1,13 @@
+import warnings
+
+import librosa
 import skimage.transform
-from playsound import playsound
-from scipy.io import wavfile
-from scipy.signal import butter, sosfilt, sosfiltfilt, sosfreqz
-from util import measure
-import matplotlib.pyplot as plt
+from _library_paulstretch_mono import paulstretch
+from scipy.signal import butter, sosfilt
 import _library_Sigproc as sigproc
 import numpy as np
 import fileManagment as fm
+from util import measure
 
 # This file contains all the methods regarding the pre-processing phase of the signals
 # Here the dataset containing the raw signals is taken:
@@ -24,7 +25,10 @@ import fileManagment as fm
 
 # Normalized Dataset only needed for RTD and not MFCC??
 
+# ----------------------------------------- Loading the pre-processed data --------------------------------------------
 
+
+@measure
 def load_preprocessed_dataset(dataset, sample_rate, dataset_directory, dataset_name):
     fine_dataset_name = "fine_" + dataset_name
     fine_dataset_file = dataset_directory / fine_dataset_name
@@ -38,6 +42,7 @@ def load_preprocessed_dataset(dataset, sample_rate, dataset_directory, dataset_n
         return fine_dataset
 
 
+@measure
 def load_segmented_dataset(dataset, sample_rate, dataset_directory, dataset_name):
     segmented_dataset_name = "segmented_" + dataset_name
     segmented_dataset_file = dataset_directory / segmented_dataset_name
@@ -51,33 +56,64 @@ def load_segmented_dataset(dataset, sample_rate, dataset_directory, dataset_name
         return segmented_dataset
 
 
+def load_stretched_dataset(dataset, dataset_directory, dataset_name):
+    stretched_dataset_name = "stretched_" + dataset_name
+    stretched_dataset_file = dataset_directory / stretched_dataset_name
+
+    if stretched_dataset_file.is_file():
+        return fm.read_file(stretched_dataset_file)
+    else:
+        print("No saved stretched dataset found. New stretching on the data...")
+        stretched_dataset = new_stretching_correction(dataset)
+        fm.create_file(stretched_dataset_name, stretched_dataset)
+        return stretched_dataset
+
+
+# ------------------------------------- Performing pre-processing on the data -----------------------------------------
+
+
+# 1st step
 def pre_processing(dataset, sample_rate):
     filtered_dataset = {k: noise_reduction(v, sample_rate) for k, v in dataset.items()}
     normalized_dataset = {k: new_normalization(v) for k, v in filtered_dataset.items()}
     return normalized_dataset
 
 
+# 2nd step
 def segmentation(normalized_dataset, sample_rate):
     segmented_dataset = {k: silence_removal(k, v, sample_rate) for k, v in normalized_dataset.items()}
     return segmented_dataset
 
 
-def stretching_correction(segmented_dataset, average_length):
-    stretched_dataset = {k: stretch(k, v, average_length) for k, v in segmented_dataset.items()}
+# 3rd step
+def new_stretching_correction(segmented_dataset):
+    # Not a simple interpolation, this correctly stretches the signals preserving the pitch!
+    stretched_dataset = {k: librosa_stretch(k, v) for k, v in segmented_dataset.items()}
     return stretched_dataset
 
 
-def stretch(name, signal, min_length):
+# ---------------------------------- Inner function working on single audio signals -----------------------------------
+
+def librosa_stretch(name, signal):
+    # Debug:
     # print(name)
     # print("n. of samples: %d" % signal.shape[0])
 
-    if signal.shape[0] < min_length:
-        # plt.figure()
-        # plt.plot(signal)
-        signal = skimage.transform.resize(signal, (min_length, 1), anti_aliasing=False).squeeze()
-        # plt.figure()
-        # plt.plot(signal)
-    return signal
+    initial_length = signal.shape[0]
+    target_length = 12288
+    stretch_factor = initial_length/target_length
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action="ignore", category=UserWarning)
+        stretched_signal = librosa.effects.time_stretch(signal, stretch_factor)
+    return stretched_signal
+
+
+def noise_reduction(signal, sample_rate):
+    lowcut = 300  # Hz
+    highcut = 4000  # Hz
+    order = 10
+    filtered_signal = butter_bandpass_filter(signal, lowcut, highcut, sample_rate, order)
+    return filtered_signal
 
 
 def new_normalization(x):
@@ -89,12 +125,16 @@ def new_normalization(x):
     return x
 
 
-def noise_reduction(signal, sample_rate):
-    lowcut = 300  # Hz
-    highcut = 4000  # Hz
-    order = 20
-    filtered_signal = butter_bandpass_filter(signal, lowcut, highcut, sample_rate, order)
-    return filtered_signal
+def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
+    nyq = 0.5 * sample_rate  # 8000 Hz
+    low = lowcut / nyq  # 300/8000 = 0.0375
+    high = highcut / nyq  # 4000/8000 = 0.5
+
+    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+    y = sosfilt(sos, data)
+    # filtfilt removes phase delay but it is slower
+    # y = sosfiltfilt(sos, data)
+    return y
 
 
 def silence_removal(name, signal, sample_rate, win_func=lambda x: np.ones((x,))):
@@ -104,8 +144,8 @@ def silence_removal(name, signal, sample_rate, win_func=lambda x: np.ones((x,)))
     #     print()
 
     # Define thresholds for energy and zero crossing rate
-    energy_th = 0.3  # if higher, more segmentation
-    zero_crossing_th = 70  # if lower, more segmentation
+    energy_th = 0.2  # if higher, more segmentation
+    zero_crossing_th = 65  # if lower, more segmentation
     # Define window dimension in time for framing the signal, computing the number of samples
     win_len = 0.01  # 10 ms
     win_step = 0.01  # 10 ms # if equal to win_len, no overlap
@@ -149,22 +189,60 @@ def silence_removal(name, signal, sample_rate, win_func=lambda x: np.ones((x,)))
     # elided by the segmentation stage, this zeros cause problems in the SRDT (S stands for "scaled") computation,
     # therefore here we remove the zero-padding (which does not contain information).
     segmented_signal = np.trim_zeros(segmented_signal)
+    segmented_signal = segmented_signal.astype(np.single)
     return segmented_signal
 
 
-def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
-    nyq = 0.5 * sample_rate  # 8000 Hz
-    low = lowcut / nyq  # 300/8000 = 0.0375
-    high = highcut / nyq  # 3400/8000 = 0.425
-
-    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
-    y = sosfilt(sos, data)
-    # filtfilt removes phase delay but it is slower
-    # y = sosfiltfilt(sos, data)
-    return y
+# NOT USED --------------------------------------- Old solutions ------------------------------------------------------
 
 
-# Not used ---------------------------------------------------------------------------------------------------------
+def extreme_stretching_correction(segmented_dataset, sample_rate, stretch_factor, windowsize_seconds):
+    # Not a simple interpolation, this correctly stretches the signals preserving the pitch!
+    stretched_dataset = {k: extreme_stretch(k, v, sample_rate, stretch_factor, windowsize_seconds)
+                         for k, v in segmented_dataset.items()}
+    return stretched_dataset
+
+
+def extreme_stretch(name, signal, sample_rate, stretch_factor, stretch_window_size):
+    # Adapted version of the original version of this:
+
+    ################################################################
+    # Paul's Extreme Sound Stretch (Paulstretch) - Python version
+    #
+    # by Nasca Octavian PAUL, Targu Mures, Romania
+    # http://www.paulnasca.com/
+    #
+    # http://hypermammut.sourceforge.net/paulstretch/
+    ################################################################
+
+    # print(name)
+    # print("n. of samples: %d" % signal.shape[0])
+    if signal.shape[0] < 4096:
+        signal = paulstretch(sample_rate, signal, stretch_factor, stretch_window_size)
+    return signal
+
+
+def old_stretching_correction(segmented_dataset, min_length):
+    stretched_dataset = {k: interpolation_stretch(k, v, min_length) for k, v in segmented_dataset.items()}
+    return stretched_dataset
+
+
+def interpolation_stretch(name, signal, min_length):
+    # This is a simple interpolation of the signals, used to increment the number of samples of particularly short
+    # signals and increase performance.
+    # This operation does not preserve the frequency content of the signals (it changes the pitch) and sadly it does
+    # not increase the performance of the algorithm. It was to good to be true!
+
+    # print(name)
+    # print("n. of samples: %d" % signal.shape[0])
+
+    if signal.shape[0] < min_length:
+        # plt.figure()
+        # plt.plot(signal)
+        signal = skimage.transform.resize(signal, (min_length, 1), anti_aliasing=False).squeeze()
+        # plt.figure()
+        # plt.plot(signal)
+    return signal
 
 
 def old_pre_processing(dataset):

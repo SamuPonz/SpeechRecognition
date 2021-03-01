@@ -23,7 +23,7 @@ import classification as clf
 
 # This function interrupts the program in the case of warnings
 # This is useful to quickly spot commands give problems
-warnings.showwarning = util.handle_warning
+# warnings.showwarning = util.handle_warning
 
 ###############################################################
 
@@ -80,16 +80,12 @@ segmented_dataset = sp.load_segmented_dataset(fine_dataset, sample_rate, dataset
 # segmented_dataset = sp.load_segmented_dataset(raw_dataset, sample_rate, dataset_directory, dataset_name)
 print("Segmented data loaded!")
 
-# Dataset stretching:
-# This is a simple interpolation of the signals, used to increment the number of samples of particularly short signals
-# and increase performance.
-# This operation does not preserve the frequency content of the signals (it changes the pitch) and sadly it does not
-# increase the performance of the algorithm. It was to good to be true!
 
-# print("stretching the data...")
-# minimum_length = 8192+4096
-# stretched_dataset = sp.stretching_correction(segmented_dataset, minimum_length)
-# print("Data stretched!")
+# Librosa Dataset stretching:
+# print("Loading stored stretched data...")
+# print("suppressed in order to test the classifier rapidly")
+# stretched_dataset = sp.load_stretched_dataset(segmented_dataset, dataset_directory, dataset_name)
+# print("Stretched dataset loaded!")
 
 # Verify the effect of the stretch on particular signals
 # util.reproduce_audio("down0", stretched_dataset)
@@ -100,20 +96,22 @@ print("Segmented data loaded!")
 # the signals, these are used as features in the classification stage.
 print("Loading stored mfcc features...")
 # Working on entire signals, on windows of different length, producing a fixed dimension feature matrix
-mfcc_features = fe.load_mfcc_features(fine_dataset, sample_rate, features_directory, dataset_name, fixed=True)
+mfcc_features = fe.load_mfcc_features(fine_dataset, sample_rate, features_directory, dataset_name, fixed=False)
 # Working on segmented signals, on windows of fixed length, producing a variable dimension feature matrix (the number
 # of columns changes, depending on the length of the signals
 # mfcc_features = fe.load_mfcc_features(segmented_dataset, sample_rate, features_directory, dataset_name, fixed=False)
 print("Mfcc features loaded!")
 
 # Reaction Diffusion Transform (RDT): a fixed number of clustering coefficients is extracted from fixed-length windows
-# of the signals. The clustering coefficients are scalars that give informations regarding the frequency content of the
+# of the signals. The clustering coefficients are scalars that give information regarding the frequency content of the
 # signals.
 print("Loading stored rtd features...")
 rdt_features = fe.load_rdt_features(segmented_dataset, features_directory, dataset_name)
 # The following is used in case it is wanted to perform feature extraction on the stretched data
 # rdt_features = fe.load_rdt_features(stretched_dataset, features_directory, dataset_name)
 print("Rtd features loaded!")
+
+# rdt_features, dataset_spectrograms = fe.rdt_method(segmented_dataset)
 
 
 # ---------------------------------------------- Classification -------------------------------------------------------
@@ -130,20 +128,23 @@ plt.ioff()
 
 # Plot all classes:
 
-for label in labels:
-    raw_image_name = "raw " + label + ".png"
-    segmented_image_name = "segmented " + label
-
-    # util.plot_class(label, raw_dataset)
-    # plt.savefig(images_directory / raw_image_name)
-    # plt.close()
-    # util.plot_class(label, segmented_dataset)
-    # plt.savefig(images_directory / segmented_image_name)
-    # plt.close()
-    # util.plot_class(label, rdt_features)
+# for label in labels:
+#     raw_image_name = "raw " + label + ".png"
+#     segmented_image_name = "segmented " + label
+#     util.plot_class(label, raw_dataset)
+#     plt.savefig(images_directory / raw_image_name)
+#     plt.close()
+#     util.plot_class(label, segmented_dataset)
+#     plt.savefig(images_directory / segmented_image_name)
+#     plt.close()
+#     util.plot_class(label, rdt_features)
 
 # Plot specific classes
-# util.plot_class("go", rdt_features)
+# util.plot_class("on", rdt_features)
+# util.plot_class("on", raw_dataset)
+# util.plot_class("on", fine_dataset)
+# util.plot_class("on", segmented_dataset)
+# util.plot_class("on", stretched_dataset)
 
 
 # Print parameters:
@@ -160,19 +161,54 @@ util.get_parameters(fine_dataset)
 print("segmented dataset:")
 util.get_parameters(segmented_dataset)
 
-# print("segmented dataset:")
+# print("stretched dataset:")
 # util.get_parameters(stretched_dataset)
 
-# print("mfcc_features:")
-# util.get_parameters(mfcc_features)
+print("mfcc_features:")
+util.get_parameters(mfcc_features)
+
+# print("rtd_spectrograms:")
+# util.get_parameters(dataset_spectrograms)
 
 print("rtd_features:")
 util.get_parameters(rdt_features)
 
-# -------------------------------------------------- Examples ---------------------------------------------------------
+raw_data = 0
+seg_data = 0
+mfcc_data = 0
+rdt_data = 0
 
-# util.view_example("up0", raw_dataset, segmented_dataset, mfcc_features, rdt_features)
+for sig in segmented_dataset:
+    raw_data += raw_dataset[sig].size
+    seg_data += segmented_dataset[sig].size
+    mfcc_data += mfcc_features[sig].size
+    rdt_data += rdt_features[sig].size
+
+print(raw_data)
+print(seg_data)
+print(mfcc_data)
+print(rdt_data)
+
+# util.reproduce_raw_audio("off0", raw_dataset)
+# util.reproduce_normalized_audio("off0", fine_dataset, 16000)
+# util.reproduce_normalized_audio("off0", segmented_dataset, 16000)
+# util.reproduce_normalized_audio("down0", stretched_dataset, 16000)
+
+# -------------------------------------------------- Examples ---------------------------------------------------------
+# import rdtMethods as rdt
+# name = "go14"
+# signal = segmented_dataset[name]
+# rdt1 = rdt.rdt_new(name, signal, 2**(1 + 3), 0)
+# rdt2 = rdt.rdt_new(name, signal, 2**(3 + 3), 0)
+# rdt3 = rdt.rdt_new(name, signal, 2**(6 + 3), 0)
+# rdt4 = rdt.rdt_new(name, signal, 2**(9 + 3), 0)
+
+# util.view_example("down71", raw_dataset, segmented_dataset, mfcc_features, rdt_features)
+# util.view_example("no63", raw_dataset, segmented_dataset, rdtnot, rdtsca)
+# util.plottoez("down71", segmented_dataset)
+# util.plottoez2("down71", signal, rdt1, rdt2, rdt3, rdt4)
 
 # util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
+# util.parameter_examples()
 
 plt.show()

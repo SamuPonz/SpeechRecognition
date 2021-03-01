@@ -1,5 +1,6 @@
 import os
 import time
+import wave
 from functools import wraps
 from random import randrange
 
@@ -42,6 +43,109 @@ def handle_warning(message, category, filename, lineno, file=None, line=None):
         raise category(message)
 
 
+def plottoez(name, dataset):
+    signal = dataset.get(name)
+
+    new_name = 'extracted_' + name + ".wav"
+    wavfile.write(new_name, 16000, signal)
+    playsound(new_name)
+
+    fig, axs = plt.subplots(1, 1, constrained_layout=True)
+    title_size = 10
+    x_size = 10
+    y_size = 10
+
+    plt.plot(signal.transpose())
+    plt.grid(True)
+    plt.title('Raw signal', fontsize=title_size)
+    plt.xlabel('samples', fontsize=x_size)
+    plt.ylabel('amplitude', fontsize=y_size)
+
+
+def plottoez2(name, segmented, rdt1, rdt2, rdt3, rdt4):
+
+    fig, axs = plt.subplots(4, 1, constrained_layout=True)
+    title_size = 10
+    x_size = 10
+    y_size = 10
+
+    # plt.imshow(rdt3)
+    # plt.grid(True)
+    # plt.title('RDT k = 6', fontsize=title_size)
+    # plt.xlabel('signal\'s segments', fontsize=x_size)
+    # plt.ylabel('order', fontsize=y_size)
+
+    axs[0].plot(segmented.transpose())
+    axs[0].grid(True)
+    axs[0].set_title('Segmented signal', fontsize=title_size)
+    axs[0].set_xlabel('samples', fontsize=x_size)
+    axs[0].set_ylabel('amplitude', fontsize=y_size)
+
+    axs[1].imshow(rdt1)
+    # axs[1].grid(True)
+    axs[1].set_title('RDT k = 5', fontsize=title_size)
+    axs[1].set_xlabel('signal\'s segments', fontsize=x_size)
+    axs[1].set_ylabel('order', fontsize=y_size)
+
+    axs[2].imshow(rdt2)
+    # axs[2].grid(True)
+    axs[2].set_title('RDT k = 6', fontsize=title_size)
+    axs[2].set_xlabel('signal\'s segments', fontsize=x_size)
+    axs[2].set_ylabel('order', fontsize=y_size)
+
+    axs[3].imshow(rdt3)
+    # axs[3].grid(True)
+    axs[3].set_title('RDT k = 7', fontsize=title_size)
+    axs[3].set_xlabel('signal\'s segments', fontsize=x_size)
+    axs[3].set_ylabel('order', fontsize=y_size)
+
+
+def parameter_examples():
+    k = [1, 2, 3, 4, 5, 6, 7]
+    k = np.array(k)
+    M = 1280//(2**(k+3))
+
+    # title_size = 10
+    # x_size = 10
+    # y_size = 10
+    # plt.bar(k, M, width=0.3)
+    # plt.grid(True)
+    # plt.title('Possible values of M as a function of k', fontsize=title_size)
+    # plt.xlabel('k', fontsize=x_size)
+    # plt.ylabel('M', fontsize=y_size)
+
+    title_size = 13
+    x_size = 12
+    y_size = 12
+    x = []
+    y = []
+
+    for k in range(1, 8):
+        t = 2**(k+3)
+        for w in range(t, 1281):
+            x.append(k)
+            y.append(int(np.floor(1280/w)))
+    plt.scatter(x, y)
+    x = []
+    y = []
+    for k in range(1, 8):
+
+        t = 2**(k+3)
+        x.append(k)
+        y.append(int(np.floor(1280/t)))
+
+    plt.scatter(x, y, color='red')
+    # plt.hlines(1.0, 0.0, 8.0, colors='red', linestyles='dotted', label='minimum')
+    # plt.grid()
+    plt.title('Possible combinations of k and M', fontsize=title_size)
+    plt.xlabel('Possible values of k', fontsize=x_size)
+    plt.ylabel('Possible values of M', fontsize=y_size)
+    for xy in zip(x, y):  # <--
+        plt.annotate('(%s, %s)' % xy, xy=xy, textcoords='data', size=13)  # <--
+
+    plt.show()
+
+
 def view_example(name, dataset, segmented_dataset, mfcc_features, rtd_features):
     # Look at a particular signal, selected by its name, adn its feature vectors
 
@@ -54,33 +158,41 @@ def view_example(name, dataset, segmented_dataset, mfcc_features, rtd_features):
     wavfile.write(new_name, 16000, signal)
     playsound(new_name)
 
-    fig, axs = plt.subplots(4, 1, constrained_layout=True)
-    fig.suptitle('Example of a signal and its feature vectors', fontsize=10)
+    fig, axs = plt.subplots(3, 1, constrained_layout=True)
+    # fig.suptitle('Example of an audio signal', fontsize=10)
     title_size = 10
-    x_size = 8
-    y_size = 8
+    x_size = 10
+    y_size = 10
 
-    axs[0].plot(signal.transpose())
+    # plt.plot(signal.transpose())
+    # plt.grid(True)
+    # plt.title('Raw signal', fontsize=title_size)
+    # plt.xlabel('samples', fontsize=x_size)
+    # plt.ylabel('amplitude', fontsize=y_size)
+
+    # axs[0].plot(signal.transpose())
+    # axs[0].grid(True)
+    # axs[0].set_title('Raw signal', fontsize=title_size)
+    # axs[0].set_xlabel('samples', fontsize=x_size)
+    # axs[0].set_ylabel('amplitude', fontsize=y_size)
+
+    axs[0].plot(segmented_signal.transpose())
     axs[0].grid(True)
-    axs[0].set_title('Raw signal', fontsize=title_size)
+    axs[0].set_title('Segmented signal', fontsize=title_size)
     axs[0].set_xlabel('samples', fontsize=x_size)
     axs[0].set_ylabel('amplitude', fontsize=y_size)
 
-    axs[1].plot(segmented_signal.transpose())
-    axs[1].grid(True)
-    axs[1].set_title('Segmented signal', fontsize=title_size)
-    axs[1].set_xlabel('samples', fontsize=x_size)
-    axs[1].set_ylabel('amplitude', fontsize=y_size)
+    axs[1].imshow(mfcc_feature_vector)
+    # axs[0].grid(True)
+    axs[1].set_title('Classic RTD', fontsize=title_size)
+    axs[1].set_xlabel('signal\'s segments', fontsize=x_size)
+    axs[1].set_ylabel('order', fontsize=y_size)
 
-    axs[2].imshow(mfcc_feature_vector.transpose())
-    axs[2].set_title('mfcc feature vector', fontsize=title_size)
-    axs[2].set_xlabel('time', fontsize=x_size)
-    axs[2].set_ylabel('frequency', fontsize=y_size)
-
-    axs[3].imshow(rtd_feature_vector)
-    axs[3].set_title('rtd feature vector', fontsize=title_size)
-    axs[3].set_xlabel('time', fontsize=x_size)
-    axs[3].set_ylabel('frequency', fontsize=y_size)
+    axs[2].imshow(rtd_feature_vector)
+    # axs[1].grid(True)
+    axs[2].set_title('Scaled RTD', fontsize=title_size)
+    axs[2].set_xlabel('signal\'s segments', fontsize=x_size)
+    axs[2].set_ylabel('order', fontsize=y_size)
 
 
 def view_mfcc_example(name, dataset, mfcc_features):
@@ -292,6 +404,8 @@ def plot_class(command_class, dictio):
     # else:
     #     command_index = 0
     # counter = 0
+
+
     figure = plt.figure(figsize=(20, 10))
     figure.canvas.manager.full_screen_toggle()
     figure.suptitle(command_class+" commands", fontsize=10)
@@ -299,22 +413,39 @@ def plot_class(command_class, dictio):
     counter = 0
     for value in foodict.values():
         counter += 1
+        # plt.grid(True)
         plt.subplot(10, (len(foodict) + 1) // 10, counter)
         if len(value.shape) > 1:  # if data has a second dimension
             plt.imshow(value)
         else:
             plt.plot(value.transpose())
 
-    plt.grid(True)
 
 
-def reproduce_audio(name, stretched):
-    example = stretched[name]
-    wavfile.write('stretched_audio.wav', 16000, example)
-    playsound('stretched_audio.wav')
+
+def reproduce_raw_audio(name, dataset):
+    example = dataset[name]
+    wavfile.write('extracted.wav', 16000, example)
+    playsound('extracted.wav')
 
 
-def casting_influence(dictio):
+def reproduce_normalized_audio(name, dataset, sample_rate):
+    # example = dataset[name]
+    # wavfile.write('extracted_'+name+'.wav', 16000, np.int16(example*16000).tostring())
+    # playsound('extracted.wav')
+
+    example = dataset[name]
+    outfile = wave.open("extracted.wav", "wb")
+    outfile.setsampwidth(2)
+    outfile.setframerate(sample_rate)
+    outfile.setnchannels(1)
+    outfile.writeframes(np.int16(example*16000).tostring())
+    outfile.close()
+
+    playsound('extracted.wav')
+
+
+def casting_influence(dataset):
     # --- Observe how casting influences the reproduction of audio file
 
     # The wavfile.read function used to create the dataset returns a nparray which type is the one which minimal
@@ -325,7 +456,7 @@ def casting_influence(dictio):
     # reconverted to any int type of any size
 
     j = 20  # select i in the range [0:999] # Consider signals 38 and 39.
-    audio = list(dictio.values())[j]
+    audio = list(dataset.values())[j]
     wavfile.write('audio.wav', 16000, audio)
     playsound('audio.wav')
     # time.sleep(1.2)

@@ -127,6 +127,7 @@ def rdt_method(dataset):
     dataset_features = {k: rdt.build_feature_vector(k, v, M) for k, v in dataset_spectrograms.items()}
 
     return dataset_features
+    # return dataset_spectrograms
 
     # //////////////
     # return dataset_spectrograms, dataset_features

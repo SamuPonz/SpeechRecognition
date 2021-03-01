@@ -1,20 +1,14 @@
 
 # The following file is used to test functions
-import time
 from pathlib import Path
-from random import randrange
 
-from playsound import playsound
-from scipy.io import wavfile
-
+import librosa
+import scipy
 import datasetMenagment as ds
-import featureExtraction
-import mfccMethods
 import preProcessing as sp
-import rdtMethods as rtd
-import matplotlib.pyplot as plt
 import util
 import warnings
+import matplotlib.pyplot as plt
 
 
 # This function interrupts the program in the case of warnings
@@ -28,26 +22,132 @@ audiofiles_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Com
 dataset_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
 features_directory = Path("D:\Programmi\PyCharm Projects\SpeechRecognition")
 
-dataset_name = "myData.p"
-dataset = ds.load_dataset(dataset_directory, audiofiles_directory, dataset_name)
+dataset_name = "datasetSamu.p"
+dataset, labels = ds.load_dataset(dataset_directory, audiofiles_directory, dataset_name)
 sample_rate = 16000
 
 # filtered_dataset = sp.new_pre_processing(dataset, sample_rate)
 # util.plot_class(5, dataset)
 # util.plot_class(5, filtered_dataset)
 
-signal = dataset.get("down1.wav")
+name = "down1"
+signal = dataset[name]
 filtered = sp.noise_reduction(signal, sample_rate)
 normalized = sp.new_normalization(filtered)
-segmented = sp.silence_removal(normalized, sample_rate)
-plt.subplot(4, 1, 1)
-plt.plot(signal)
-plt.subplot(4, 1, 2)
-plt.plot(filtered)
-plt.subplot(4, 1, 3)
-plt.plot(normalized)
-plt.subplot(4, 1, 4)
-plt.plot(segmented)
+segmented = sp.silence_removal(name, normalized, sample_rate)
+
+# Plotting the complete pre-processing phase
+# plt.subplot(4, 1, 1)
+# plt.plot(signal)
+# plt.subplot(4, 1, 2)
+# plt.plot(filtered)
+# plt.subplot(4, 1, 3)
+# plt.plot(normalized)
+# plt.subplot(4, 1, 4)
+# plt.plot(segmented)
+
+#############################################
+#
+# from scipy.signal import butter, lfilter
+#
+#
+# def butter_bandpass(lowcut, highcut, fs, order=20):
+#     nyq = 0.5 * fs
+#     low = lowcut / nyq
+#     high = highcut / nyq
+#     b, a = butter(order, [low, high], btype='band')
+#     return b, a
+#
+#
+# def butter_bandpass_filter(data, lowcut, highcut, fs, order=20):
+#     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+#     y = lfilter(b, a, data)
+#     return y
+#
+#
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from scipy.signal import freqz
+#
+# # Sample rate and desired cutoff frequencies (in Hz).
+# fs = 16000.0
+# lowcut = 300.0
+# highcut = 3400.0
+#
+# # Plot the frequency response for a few different orders.
+# plt.figure(1)
+# plt.clf()
+# for order in [10]:
+#     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+#     w, h = freqz(b, a, worN=2000)
+#     plt.plot((fs * 0.5 / np.pi) * w, abs(h), label="order = %d" % order)
+#
+# plt.plot([0, 0.5 * fs], [np.sqrt(0.5), np.sqrt(0.5)],
+#          '--', label='sqrt(0.5)')
+# plt.xlabel('Frequency (Hz)')
+# plt.ylabel('Gain')
+# plt.grid(True)
+# plt.legend(loc='best')
+#
+# # Filter a noisy signal.
+#
+# name = "off41"
+# T = 1/fs
+# x = dataset[name]
+# t = np.linspace(0, 1, x.shape[0], endpoint=False)
+# a = 0.02
+# plt.figure(2)
+# plt.clf()
+# plt.plot(t, x, label='Noisy signal')
+#
+# y = butter_bandpass_filter(x, lowcut, highcut, fs, order=10)
+# plt.plot(t, y, label='Filtered signal')
+# plt.xlabel('time (seconds)')
+# plt.hlines([-a, a], 0, T, linestyles='--')
+# plt.grid(True)
+# plt.axis('tight')
+# plt.legend(loc='upper left')
+
+#######################################################
+# from scipy import signal
+# lowcut = 300  # Hz
+# highcut = 4000  # Hz
+# order = 10
+# nyq = 0.5 * sample_rate  # 8000 Hz
+# low = lowcut / nyq  # 300/8000 = 0.0375
+# high = highcut / nyq  # 3400/8000 = 0.425
+#
+# b, a = signal.butter(order, [low, high], analog=False, btype='band', output='ba')
+# sos = signal.butter(order, [low, high], analog=False, btype='band', output='sos')
+# x = signal.unit_impulse(8000)
+# y_tf = signal.lfilter(b, a, x)
+# y_sos = signal.sosfilt(sos, x)
+# plt.grid(True)
+# plt.plot(y_tf, 'r', label='TF')
+# plt.plot(y_sos, 'k', label='SOS')
+# plt.legend(loc='best')
+# plt.show()
+#######################
+import matplotlib.pyplot as plt
+from scipy import signal
+b, a = signal.ellip(13, 0.009, 80, 0.05, output='ba')
+sos = signal.ellip(13, 0.009, 80, 0.05, output='sos')
+x = signal.unit_impulse(700)
+y_tf = signal.lfilter(b, a, x)
+y_sos = signal.sosfilt(sos, x)
+plt.grid(True)
+plt.plot(y_tf, 'r', label='TF')
+plt.plot(y_sos, 'k', label='SOS')
+plt.legend(loc='best')
+plt.show()
+##############################
+
+# song, fs = librosa.load("go1.wav", sr=None)
+#
+# song_2_times_faster = librosa.effects.time_stretch(song, 0.2)
+#
+# scipy.io.wavfile.write("song_2_times_faster.wav", fs, song_2_times_faster) # save the song
+
 
 # #######
 #
