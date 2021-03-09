@@ -2,8 +2,10 @@ import os
 from natsort import natsorted
 from scipy.io import wavfile
 import fileManagment as fm
+from util import measure
 
 
+@measure
 def load_dataset(dataset_directory, audiofiles_directory, dataset_name):
     # Loads the dataset or creates a new one using the audio files stored in the specified directory
     raw_dataset_name = "raw_" + dataset_name

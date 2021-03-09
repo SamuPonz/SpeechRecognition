@@ -125,21 +125,9 @@ def new_normalization(x):
     return x
 
 
-def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
-    nyq = 0.5 * sample_rate  # 8000 Hz
-    low = lowcut / nyq  # 300/8000 = 0.0375
-    high = highcut / nyq  # 4000/8000 = 0.5
-
-    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
-    y = sosfilt(sos, data)
-    # filtfilt removes phase delay but it is slower
-    # y = sosfiltfilt(sos, data)
-    return y
-
-
 def silence_removal(name, signal, sample_rate, win_func=lambda x: np.ones((x,))):
 
-    # Debugging
+    # Debugging (If you use it, remember to add the name argument!)
     # if name == "on27":
     #     print()
 
@@ -191,6 +179,19 @@ def silence_removal(name, signal, sample_rate, win_func=lambda x: np.ones((x,)))
     segmented_signal = np.trim_zeros(segmented_signal)
     segmented_signal = segmented_signal.astype(np.single)
     return segmented_signal
+
+
+def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
+    nyq = 0.5 * sample_rate  # 8000 Hz
+    low = lowcut / nyq  # 300/8000 = 0.0375
+    high = highcut / nyq  # 4000/8000 = 0.5
+
+    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+    y = sosfilt(sos, data)
+    # filtfilt removes phase delay but it is slower
+    # y = sosfiltfilt(sos, data)
+    return y
+
 
 
 # NOT USED --------------------------------------- Old solutions ------------------------------------------------------

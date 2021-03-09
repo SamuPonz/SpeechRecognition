@@ -30,6 +30,8 @@ import classification as clf
 # ------------------------------------------------ Settings -----------------------------------------------------------
 
 # Setting paths:
+from recognitionMethods import recognition
+
 command_recordings_dir = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\(1000,10)_"
                               "ComandiDatasetSelezionati")
 noise_recordings_dir = Path("D:\Programmi\PyCharm Projects\SpeechRecognition\Comandi Samu\_background_noise")
@@ -117,7 +119,7 @@ print("Rtd features loaded!")
 # ---------------------------------------------- Classification -------------------------------------------------------
 
 print("Classification of rtd features...")
-clf.rtd_classification(rdt_features, labels)
+trained_classifier, selected_commands, global_label_indices = clf.rtd_classification(rdt_features, labels)
 
 # print("Classification of mfcc features...")
 # clf.mfcc_classification(mfcc_features, labels)
@@ -149,50 +151,51 @@ plt.ioff()
 
 # Print parameters:
 
-print("Data dimensions:")
-print()
-
-print("raw dataset:")
-util.get_parameters(raw_dataset)
-
-print("fine dataset:")
-util.get_parameters(fine_dataset)
-
-print("segmented dataset:")
-util.get_parameters(segmented_dataset)
-
-# print("stretched dataset:")
-# util.get_parameters(stretched_dataset)
-
-print("mfcc_features:")
-util.get_parameters(mfcc_features)
-
-# print("rtd_spectrograms:")
-# util.get_parameters(dataset_spectrograms)
-
-print("rtd_features:")
-util.get_parameters(rdt_features)
-
-raw_data = 0
-seg_data = 0
-mfcc_data = 0
-rdt_data = 0
-
-for sig in segmented_dataset:
-    raw_data += raw_dataset[sig].size
-    seg_data += segmented_dataset[sig].size
-    mfcc_data += mfcc_features[sig].size
-    rdt_data += rdt_features[sig].size
-
-print(raw_data)
-print(seg_data)
-print(mfcc_data)
-print(rdt_data)
+#
+# print("Data dimensions:")
+#
+# print("raw dataset:")
+# util.get_parameters(raw_dataset)
+#
+# print("fine dataset:")
+# util.get_parameters(fine_dataset)
+#
+# print("segmented dataset:")
+# util.get_parameters(segmented_dataset)
+#
+# # print("stretched dataset:")
+# # util.get_parameters(stretched_dataset)
+#
+# print("mfcc_features:")
+# util.get_parameters(mfcc_features)
+#
+# # print("rtd_spectrograms:")
+# # util.get_parameters(dataset_spectrograms)
+#
+# print("rtd_features:")
+# util.get_parameters(rdt_features)
+#
+# raw_data = 0
+# seg_data = 0
+# mfcc_data = 0
+# rdt_data = 0
+#
+# for sig in segmented_dataset:
+#     raw_data += raw_dataset[sig].size
+#     seg_data += segmented_dataset[sig].size
+#     mfcc_data += mfcc_features[sig].size
+#     rdt_data += rdt_features[sig].size
+#
+# print(raw_data)
+# print(seg_data)
+# print(mfcc_data)
+# print(rdt_data)
 
 # util.reproduce_raw_audio("off0", raw_dataset)
 # util.reproduce_normalized_audio("off0", fine_dataset, 16000)
 # util.reproduce_normalized_audio("off0", segmented_dataset, 16000)
 # util.reproduce_normalized_audio("down0", stretched_dataset, 16000)
+
 
 # -------------------------------------------------- Examples ---------------------------------------------------------
 # import rdtMethods as rdt
@@ -210,5 +213,14 @@ print(rdt_data)
 
 # util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
 # util.parameter_examples()
+
+# ----------------------------------------------- Recognition ---------------------------------------------------------
+
+print("Let's try to recognise something!")
+while True:
+    recognition(trained_classifier, selected_commands, global_label_indices)
+    if input("Repeat the program? (Y/N)").strip().upper() != 'Y':
+        break
+
 
 plt.show()
