@@ -20,6 +20,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 from util import measure
+import joblib
+
 
 # The machine learning pipeline has the following steps: preparing data, creating training/testing sets, instantiating
 # the classifier, training the classifier, making predictions, evaluating performance, tweaking parameters.
@@ -40,11 +42,11 @@ def rtd_classification(features, labels):
     # Manual class selection (subset of labels)
     # selected_commands = ["no", "yes"]
     # selected_commands = ["go", "no", "off", "right", "yes"]
-    # selected_commands = ["go", "no", "off", "right", "stop", "yes"]
+    selected_commands = ["go", "no", "off", "right", "stop", "yes"]
     # selected_commands = ["go", "no", "off", "right", "stop", "up", "yes"]
     # selected_commands = ["go", "left", "no", "off", "right", "stop", "up", "yes"]
     # selected_commands = ["go", "left", "no", "off", "on", "right", "stop", "up", "yes"]
-    selected_commands = ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes"]
+    # selected_commands = ["down", "go", "left", "no", "off", "on", "right", "stop", "up", "yes"]
 
     # Filtering formatted data according to the previous commands selection
     global_feature_vectors = filter_data(selected_commands, global_label_indices, global_feature_vectors)
@@ -74,8 +76,7 @@ def rtd_classification(features, labels):
     # knn_classification(X_g, y_g)
 
     clf = svc_classification(X_g, y_g, selected_commands)
-
-    return clf, selected_commands, global_label_indices
+    joblib.dump([clf, selected_commands, global_label_indices], 'model.sav', compress=1)
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Definition of different classifiers
@@ -95,10 +96,10 @@ def svc_classification(x, y, selected_commands):
     # Parameter optimization using k-fold cross validation: estimation of the classifier's parameters that maximise
     # specific metrics/scores
 
-    best_parameters = parameters_estimation(X_train, X_test, y_train, y_test)
+    # best_parameters = parameters_estimation(X_train, X_test, y_train, y_test)
 
     # Directly using the best parameters:
-    # 1nd configuration:
+    # 1st configuration:
     # Stretching OFF
     # Selected commands ["no", "off", "on", "stop", "yes"]
     # If RDT parameters are K = 4, M = 10, scaled = 1
@@ -130,7 +131,7 @@ def svc_classification(x, y, selected_commands):
     #                     }
 
     # Directly using the best parameters:
-    # 3nd configuration:
+    # 3rd configuration:
     # Stretching ON (standard n_samples of 12288
     # Selected commands ["go", "no", "off", "on", "stop", "yes"]
     # If RDT parameters are K = 5, M = 48, scaled = 1
@@ -146,7 +147,7 @@ def svc_classification(x, y, selected_commands):
     # }
 
     # Directly using the best parameters:
-    # 4nd configuration:
+    # 4th configuration:
     # Stretching OFF
     # Selected commands ["down", "left", "no", "off", "on", "right", "stop", "up", "yes"]
     # If RDT parameters are K = 4, M = 10, scaled = 1
@@ -162,7 +163,7 @@ def svc_classification(x, y, selected_commands):
     #     }
 
     # Directly using the best parameters:
-    # 4nd configuration:
+    # 5th configuration:
     # Stretching OFF
     # Selected commands ["go", "no", "off", "on", "stop", "yes"]
     # If RDT parameters are K = 4, M = 10, scaled = 1
@@ -178,7 +179,7 @@ def svc_classification(x, y, selected_commands):
     #    }
 
     # Directly using the best parameters:
-    # 4nd configuration:
+    # 6th configuration:
     # Stretching OFF
     # Selected commands ["go", "no", "off", "right", "stop", "yes"]
     # If RDT parameters are K = 5, M = 4, scaled = 1
@@ -192,6 +193,22 @@ def svc_classification(x, y, selected_commands):
     #                         "kernel": "rbf"
     #                     }
     #                 }
+
+    # Directly using the best parameters:
+    # 7th configuration:
+    # Stretching OFF
+    # Selected commands ["go", "no", "off", "right", "stop", "yes"]
+    # If RDT parameters are K = 4, M = 10, scaled = 1
+    # If the train/test split the test_size  = 0.3
+    # then:
+    best_parameters = {
+                        "accuracy": {
+                            "C": 13,
+                            "decision_function_shape": "ovo",
+                            "gamma": 3.5,
+                            "kernel": "rbf"
+                        }
+                    }
 
     # Print the best parameters configurations that maximise specific metric/scores
     print("List of the parameters used according to a specific scoring parameter:")
@@ -255,9 +272,8 @@ def svc_classification(x, y, selected_commands):
     #
     #     # print(title)
     #     # print(disp.confusion_matrix)
-
-    plt.ion()
-    plt.show()
+    # plt.ion()
+    # plt.show()
 
     return clf
 

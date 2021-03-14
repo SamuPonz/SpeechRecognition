@@ -193,7 +193,6 @@ def butter_bandpass_filter(data, lowcut, highcut, sample_rate, order):
     return y
 
 
-
 # NOT USED --------------------------------------- Old solutions ------------------------------------------------------
 
 

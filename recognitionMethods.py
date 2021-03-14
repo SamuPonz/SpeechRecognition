@@ -6,12 +6,15 @@ from scipy.io import wavfile
 from preProcessing import noise_reduction, new_normalization, silence_removal
 from rdtMethods import rdt_new, build_feature_vector
 from util import measure
-from tkinter.filedialog import askopenfilename
+import joblib
 
 
 @measure
-def recognition(clf, selected_commands, global_label_indices):
-    # reads the file
+def recognition():
+    # loads the model
+    clf, selected_commands, global_label_indices = joblib.load('model.sav')
+
+    # reads the new audio file to recognize
     root = Tk()
     root.withdraw()
     root.wm_attributes("-topmost", 1)

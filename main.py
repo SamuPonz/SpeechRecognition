@@ -118,8 +118,8 @@ print("Rtd features loaded!")
 
 # ---------------------------------------------- Classification -------------------------------------------------------
 
-print("Classification of rtd features...")
-trained_classifier, selected_commands, global_label_indices = clf.rtd_classification(rdt_features, labels)
+print("Creation of a model for rtd features recognition...")
+clf.rtd_classification(rdt_features, labels)
 
 # print("Classification of mfcc features...")
 # clf.mfcc_classification(mfcc_features, labels)
@@ -218,7 +218,7 @@ plt.ioff()
 
 print("Let's try to recognise something!")
 while True:
-    recognition(trained_classifier, selected_commands, global_label_indices)
+    recognition()
     if input("Repeat the program? (Y/N)").strip().upper() != 'Y':
         break
 
