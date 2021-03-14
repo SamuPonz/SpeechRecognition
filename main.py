@@ -174,7 +174,12 @@ plt.ioff()
 #
 # print("rtd_features:")
 # util.get_parameters(rdt_features)
-#
+
+
+# ------------------------------------------------- Fast operations ---------------------------------------------------
+
+# Computation of the overall number of samples in the datasets
+
 # raw_data = 0
 # seg_data = 0
 # mfcc_data = 0
@@ -191,13 +196,17 @@ plt.ioff()
 # print(mfcc_data)
 # print(rdt_data)
 
+
+# Reproduce an example of an audio file after every operation:
+
 # util.reproduce_raw_audio("off0", raw_dataset)
 # util.reproduce_normalized_audio("off0", fine_dataset, 16000)
 # util.reproduce_normalized_audio("off0", segmented_dataset, 16000)
 # util.reproduce_normalized_audio("down0", stretched_dataset, 16000)
 
 
-# -------------------------------------------------- Examples ---------------------------------------------------------
+# Comparison of different rtd features of the same signal
+
 # import rdtMethods as rdt
 # name = "go14"
 # signal = segmented_dataset[name]
@@ -205,6 +214,8 @@ plt.ioff()
 # rdt2 = rdt.rdt_new(name, signal, 2**(3 + 3), 0)
 # rdt3 = rdt.rdt_new(name, signal, 2**(6 + 3), 0)
 # rdt4 = rdt.rdt_new(name, signal, 2**(9 + 3), 0)
+
+# -------------------------------------------------- Examples ---------------------------------------------------------
 
 # util.view_example("down71", raw_dataset, segmented_dataset, mfcc_features, rdt_features)
 # util.view_example("no63", raw_dataset, segmented_dataset, rdtnot, rdtsca)
@@ -214,13 +225,12 @@ plt.ioff()
 # util.view_mfcc_example("off23.wav", raw_dataset, mfcc_features)
 # util.parameter_examples()
 
-# ----------------------------------------------- Recognition ---------------------------------------------------------
+# ------------------------------------------------- Recognition -------------------------------------------------------
 
 print("Let's try to recognise something!")
 while True:
-    recognition()
+    recognition(command_recordings_dir)
     if input("Repeat the program? (Y/N)").strip().upper() != 'Y':
         break
-
 
 plt.show()

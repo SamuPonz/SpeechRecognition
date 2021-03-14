@@ -1,7 +1,7 @@
 import warnings
 
-import librosa
-import skimage.transform
+# import librosa
+# import skimage.transform
 from _library_paulstretch_mono import paulstretch
 from scipy.signal import butter, sosfilt
 import _library_Sigproc as sigproc
