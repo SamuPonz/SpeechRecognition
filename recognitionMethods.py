@@ -7,12 +7,66 @@ from preProcessing import noise_reduction, new_normalization, silence_removal
 from rdtMethods import rdt_new, build_feature_vector
 from util import measure
 import joblib
+import wave
+import pyaudio  # only works on the Raspberry
 
 
-def recognition(command_recordings_dir):
+def recognise_after_record():
+    clf, selected_commands, global_label_indices = joblib.load('model.sav')
+    input("Press a key to start the recognition: ")
+    audio_file = record_audio()
+    print("recording ended after 1 s")
+    algorithm(audio_file, clf, global_label_indices)
+
+
+def recognise_audiofile(command_recordings_dir):
     # loads the model
     clf, selected_commands, global_label_indices = joblib.load('model.sav')
+    audio_file = open_file(command_recordings_dir, selected_commands)
+    playsound(audio_file)
+    algorithm(audio_file, clf, global_label_indices)
 
+
+def record_audio():
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
+    RECORD_SECONDS = 1
+    WAVE_OUTPUT_FILENAME = "output.wav"
+
+    p = pyaudio.PyAudio()
+
+    stream = p.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+
+    print("* recording")
+
+    frames = []
+
+    for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+        data = stream.read(CHUNK)
+        frames.append(data)
+
+    print("* done recording")
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(p.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b''.join(frames))
+    wf.close()
+    return WAVE_OUTPUT_FILENAME
+
+
+def open_file(command_recordings_dir, selected_commands):
     # reads the new audio file to recognize
     root = Tk()
     root.withdraw()
@@ -22,9 +76,9 @@ def recognition(command_recordings_dir):
     # print("Please record yourself")
     # audio_file = record_audio()
     print("Please select a .wav audio file")
-    audio_file = filedialog.askopenfilename(parent=root, initialdir=command_recordings_dir)  # shows dialog box and return the path
-    playsound(audio_file)
-    algorithm(audio_file, clf, global_label_indices)
+    audio_file = filedialog.askopenfilename(parent=root,
+                                            initialdir=command_recordings_dir)  # shows dialog box and return the path
+    return audio_file
 
 
 @measure

@@ -56,17 +56,17 @@ def load_segmented_dataset(dataset, sample_rate, dataset_directory, dataset_name
         return segmented_dataset
 
 
-def load_stretched_dataset(dataset, dataset_directory, dataset_name):
-    stretched_dataset_name = "stretched_" + dataset_name
-    stretched_dataset_file = dataset_directory / stretched_dataset_name
-
-    if stretched_dataset_file.is_file():
-        return fm.read_file(stretched_dataset_file)
-    else:
-        print("No saved stretched dataset found. New stretching on the data...")
-        stretched_dataset = new_stretching_correction(dataset)
-        fm.create_file(stretched_dataset_name, stretched_dataset)
-        return stretched_dataset
+# def load_stretched_dataset(dataset, dataset_directory, dataset_name):
+# #     stretched_dataset_name = "stretched_" + dataset_name
+# #     stretched_dataset_file = dataset_directory / stretched_dataset_name
+# #
+# #     if stretched_dataset_file.is_file():
+# #         return fm.read_file(stretched_dataset_file)
+# #     else:
+# #         print("No saved stretched dataset found. New stretching on the data...")
+# #         stretched_dataset = new_stretching_correction(dataset)
+# #         fm.create_file(stretched_dataset_name, stretched_dataset)
+# #         return stretched_dataset
 
 
 # ------------------------------------- Performing pre-processing on the data -----------------------------------------
@@ -86,26 +86,26 @@ def segmentation(normalized_dataset, sample_rate):
 
 
 # 3rd step
-def new_stretching_correction(segmented_dataset):
-    # Not a simple interpolation, this correctly stretches the signals preserving the pitch!
-    stretched_dataset = {k: librosa_stretch(k, v) for k, v in segmented_dataset.items()}
-    return stretched_dataset
+# def new_stretching_correction(segmented_dataset):
+#     # Not a simple interpolation, this correctly stretches the signals preserving the pitch!
+#     stretched_dataset = {k: librosa_stretch(k, v) for k, v in segmented_dataset.items()}
+#     return stretched_dataset
 
 
 # ---------------------------------- Inner function working on single audio signals -----------------------------------
 
-def librosa_stretch(name, signal):
-    # Debug:
-    # print(name)
-    # print("n. of samples: %d" % signal.shape[0])
-
-    initial_length = signal.shape[0]
-    target_length = 12288
-    stretch_factor = initial_length/target_length
-    with warnings.catch_warnings():
-        warnings.filterwarnings(action="ignore", category=UserWarning)
-        stretched_signal = librosa.effects.time_stretch(signal, stretch_factor)
-    return stretched_signal
+# def librosa_stretch(name, signal):
+#     # Debug:
+#     # print(name)
+#     # print("n. of samples: %d" % signal.shape[0])
+#
+#     initial_length = signal.shape[0]
+#     target_length = 12288
+#     stretch_factor = initial_length/target_length
+#     with warnings.catch_warnings():
+#         warnings.filterwarnings(action="ignore", category=UserWarning)
+#         stretched_signal = librosa.effects.time_stretch(signal, stretch_factor)
+#     return stretched_signal
 
 
 def noise_reduction(signal, sample_rate):
@@ -222,27 +222,27 @@ def extreme_stretch(name, signal, sample_rate, stretch_factor, stretch_window_si
     return signal
 
 
-def old_stretching_correction(segmented_dataset, min_length):
-    stretched_dataset = {k: interpolation_stretch(k, v, min_length) for k, v in segmented_dataset.items()}
-    return stretched_dataset
+# def old_stretching_correction(segmented_dataset, min_length):
+#     stretched_dataset = {k: interpolation_stretch(k, v, min_length) for k, v in segmented_dataset.items()}
+#     return stretched_dataset
 
 
-def interpolation_stretch(name, signal, min_length):
-    # This is a simple interpolation of the signals, used to increment the number of samples of particularly short
-    # signals and increase performance.
-    # This operation does not preserve the frequency content of the signals (it changes the pitch) and sadly it does
-    # not increase the performance of the algorithm. It was to good to be true!
-
-    # print(name)
-    # print("n. of samples: %d" % signal.shape[0])
-
-    if signal.shape[0] < min_length:
-        # plt.figure()
-        # plt.plot(signal)
-        signal = skimage.transform.resize(signal, (min_length, 1), anti_aliasing=False).squeeze()
-        # plt.figure()
-        # plt.plot(signal)
-    return signal
+# def interpolation_stretch(name, signal, min_length):
+#     # This is a simple interpolation of the signals, used to increment the number of samples of particularly short
+#     # signals and increase performance.
+#     # This operation does not preserve the frequency content of the signals (it changes the pitch) and sadly it does
+#     # not increase the performance of the algorithm. It was to good to be true!
+#
+#     # print(name)
+#     # print("n. of samples: %d" % signal.shape[0])
+#
+#     if signal.shape[0] < min_length:
+#         # plt.figure()
+#         # plt.plot(signal)
+#         signal = skimage.transform.resize(signal, (min_length, 1), anti_aliasing=False).squeeze()
+#         # plt.figure()
+#         # plt.plot(signal)
+#     return signal
 
 
 def old_pre_processing(dataset):
