@@ -13,15 +13,20 @@ import pyaudio  # only works on the Raspberry
 
 def recognise_after_record():
     clf, selected_commands, global_label_indices = joblib.load('model.sav')
+    print("command classes that can be recognised are: ")
+    print(selected_commands)
     input("Press a key to start the recognition: ")
     audio_file = record_audio()
     print("recording ended after 1 s")
+    playsound(audio_file)
     algorithm(audio_file, clf, global_label_indices)
 
 
 def recognise_audiofile(command_recordings_dir):
     # loads the model
     clf, selected_commands, global_label_indices = joblib.load('model.sav')
+    print("command classes that can be recognised are: ")
+    print(selected_commands)
     audio_file = open_file(command_recordings_dir, selected_commands)
     playsound(audio_file)
     algorithm(audio_file, clf, global_label_indices)
@@ -71,8 +76,6 @@ def open_file(command_recordings_dir, selected_commands):
     root = Tk()
     root.withdraw()
     root.wm_attributes("-topmost", 1)
-    print("command classes that can be recognised are: ")
-    print(selected_commands)
     # print("Please record yourself")
     # audio_file = record_audio()
     print("Please select a .wav audio file")
